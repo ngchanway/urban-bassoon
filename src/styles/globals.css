@@ -26,14 +26,18 @@
 /* Japan Navi Journey demo skin (?demo=nakasendo) */
 html.japan-navi {
   --bg: #1a3a34;
-  --surface: rgba(255, 255, 255, 0.05);
-  --border: rgba(255, 255, 255, 0.1);
-  --amber: #7b181b;
-  --amber-dim: rgba(123, 24, 27, 0.22);
-  --amber-glow: rgba(123, 24, 27, 0.12);
+  --surface: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.14);
+  /* Light warm accent for text / active UI (readable on forest green) */
+  --amber: #e8c9a8;
+  --amber-dim: rgba(232, 201, 168, 0.18);
+  --amber-glow: rgba(232, 201, 168, 0.1);
   --text: #f2ebe3;
-  --text-dim: rgba(242, 235, 227, 0.45);
-  --text-faint: rgba(242, 235, 227, 0.28);
+  --text-dim: rgba(242, 235, 227, 0.72);
+  --text-faint: rgba(242, 235, 227, 0.5);
+  /* Brand burgundy for fills only */
+  --brand: #7b181b;
+  --brand-dim: rgba(123, 24, 27, 0.35);
 }
 
 html.japan-navi body {
@@ -46,8 +50,8 @@ html.japan-navi body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text);
-  background: var(--amber-dim);
-  border: 1px solid rgba(123, 24, 27, 0.35);
+  background: var(--brand-dim);
+  border: 1px solid rgba(123, 24, 27, 0.45);
   border-radius: 8px;
   padding: 6px 10px;
   margin: 0 14px 8px;
@@ -64,7 +68,7 @@ html.japan-navi body {
   padding: 14px 16px;
   border-radius: 14px;
   border: 1px solid rgba(123, 24, 27, 0.45);
-  background: linear-gradient(135deg, rgba(123, 24, 27, 0.35), rgba(26, 58, 52, 0.9));
+  background: linear-gradient(135deg, var(--brand-dim), rgba(26, 58, 52, 0.9));
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -108,6 +112,13 @@ html.japan-navi body {
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
+}
+
+html.japan-navi .tab-btn {
+  color: rgba(242, 235, 227, 0.55);
+}
+html.japan-navi .tab-btn.active {
+  color: var(--amber);
 }
 
 html,

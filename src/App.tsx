@@ -60,7 +60,54 @@ function bootstrapJapanNaviDemo() {
   return true
 }
 
+/** Keep `/` on a personal trip; never leave demo flats active outside ?demo=nakasendo */
+function bootstrapPersonalTrip() {
+  if (typeof window === "undefined" || isJapanNaviDemoQuery()) return
+
+  document.documentElement.classList.remove("japan-navi")
+  document.title = "TravelPal ✈️"
+  const theme = document.querySelector('meta[name="theme-color"]')
+  if (theme) theme.setAttribute("content", "#FFA828")
+
+  const active = LS.get<string>("tc_active_trip", "")
+  if (active && active !== DEMO_TRIP_ID) return
+
+  if (active === DEMO_TRIP_ID) snapshotTrip(DEMO_TRIP_ID)
+
+  type TripMeta = {
+    id: string
+    name?: string
+    destination?: string
+    startDate?: string
+    endDate?: string
+    createdAt?: string
+  }
+  const trips = LS.get<TripMeta[]>("tc_trips", [])
+  const emptyPersonal = trips.find((t) => t.id !== DEMO_TRIP_ID && !t.destination)
+
+  if (emptyPersonal) {
+    restoreTrip(emptyPersonal.id)
+    LS.set("tc_active_trip", emptyPersonal.id)
+    return
+  }
+
+  const newId = `trip_${Date.now()}`
+  const meta: TripMeta = {
+    id: newId,
+    name: "",
+    destination: "",
+    startDate: "",
+    endDate: "",
+    createdAt: new Date().toISOString(),
+  }
+  const withoutDemoDup = trips.filter((t) => t.id !== newId)
+  LS.set("tc_trips", [...withoutDemoDup, meta])
+  writeTripDefaults()
+  LS.set("tc_active_trip", newId)
+}
+
 const japanNaviDemoActive = bootstrapJapanNaviDemo()
+if (!japanNaviDemoActive) bootstrapPersonalTrip()
 
 export default function App() {
   const [tab, setTab] = useState(0)

@@ -870,32 +870,6 @@ Generate the departure day brief.`,
         </div>
       )}
 
-      {/* ── Quick Actions ── */}
-      {trip.destination && (
-        <div className="quick-actions">
-          {[
-            { icon: "✈️", label: "Trip Details", sub: "Dates & destination", tab: 1 },
-            { icon: "🧳", label: "Smart Pack", sub: "AI packing list", tab: 2 },
-            { icon: "💰", label: "Log Expense", sub: "Track spending", tab: 3 },
-            { icon: "🌍", label: "Explore", sub: "Weather & tips", tab: 4 },
-            { icon: "📸", label: "Add Memory", sub: "Drop a pin", tab: 5 },
-            { icon: "📤", label: "Share Trip", sub: "Invite travellers", action: "share" },
-          ].map((qa, i) => (
-            <div
-              key={i}
-              className="quick-action-btn"
-              onClick={() => (qa.action === "share" ? navigateTo("share") : navigateTo(qa.tab))}
-            >
-              <span className="qa-icon">{qa.icon}</span>
-              <div>
-                <div className="qa-label">{qa.label}</div>
-                <div className="qa-sub">{qa.sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* ── Recent Memories Strip ── */}
       {memories.length > 0 && (
         <div className="card">
