@@ -72,11 +72,24 @@ const MAX_TOKENS: Record<string, number> = {
 const rateLimit = new Map<string, { count: number; reset: number }>()
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 60 * 60 * 1000
+/** Prune expired entries once the Map grows past this size (avoids O(n) on every request). */
+const RATE_LIMIT_PRUNE_AT = 256
+
+function pruneExpiredRateLimits(now: number) {
+  for (const [key, entry] of rateLimit) {
+    if (now > entry.reset) rateLimit.delete(key)
+  }
+}
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
+  if (rateLimit.size >= RATE_LIMIT_PRUNE_AT) pruneExpiredRateLimits(now)
+
   const entry = rateLimit.get(ip)
   if (!entry || now > entry.reset) {
+    // Replace expired entry (and drop it from the Map if we somehow skip set) so
+    // inactive IPs do not accumulate forever.
+    if (entry) rateLimit.delete(ip)
     rateLimit.set(ip, { count: 1, reset: now + RATE_WINDOW_MS })
     return true
   }
