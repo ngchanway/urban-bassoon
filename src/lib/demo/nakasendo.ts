@@ -1,7 +1,7 @@
 /**
  * Japan Navi Journey — Nakasendo Walking Journey demo seed.
  * Source: Japan Navi Journey accommodation sheet (10 days, 25 Oct–3 Nov 2026).
- * Package total is tax-included JPY 401,500 (365,000 + 10% tax).
+ * Package total is tax-included JPY 397,485 after 1% discount (361,350 + 10% tax).
  * Adjust BASELINE_DAYS / guestCount; budgetFromItinerary keeps tc_budget in sync.
  */
 
@@ -15,12 +15,12 @@ export const GUIDE_CONTACT =
 export const ROUTE_BANNER =
   "Singapore → Narita → Shinjuku → Nagoya → Nakatsugawa → Magome & Tsumago → Kiso Valley → Narai-juku → Matsumoto → Shinjuku → Haneda → Singapore"
 
-/** Tax-included package total (JPY, two guests) from accommodation sheet. */
-const BASE_PACKAGE = 401_500
-const PACKAGE_TAX_EXCL = 365_000
-const PACKAGE_TAX = 36_500
+/** Tax-included package total (JPY, two guests) after 1% discount (invoice 00261002). */
+const BASE_PACKAGE = 397_485
+const PACKAGE_TAX_EXCL = 361_350
+const PACKAGE_TAX = 36_135
 const PACKAGE_DEPOSIT = 79_146
-const PACKAGE_BALANCE = 322_354
+const PACKAGE_BALANCE = 318_339
 const BASELINE_NIGHTS = 8
 const BASELINE_WALK_DAYS = 6
 const BASELINE_BREAKFASTS = 3
@@ -240,7 +240,7 @@ export const BASELINE_DAYS: DemoDay[] = [
       },
       {
         id: nid(),
-        text: "Richmond Hotel Matsumoto · Double · room only (1 of 2 nights)",
+        text: "Traveler's Inn Takagi (旅の宿たかぎ) · private Japanese-style room above soba restaurant near Matsumoto Castle (1 of 2 nights) · room only · shared living room / shower / toilets · limited English",
         done: false,
         kind: "stay",
         lodging: true,
@@ -262,7 +262,7 @@ export const BASELINE_DAYS: DemoDay[] = [
       },
       {
         id: nid(),
-        text: "Richmond Hotel Matsumoto · Double · room only (2 of 2 nights)",
+        text: "Traveler's Inn Takagi (旅の宿たかぎ) · private Japanese-style room above soba restaurant near Matsumoto Castle (2 of 2 nights) · room only · shared living room / shower / toilets · limited English",
         done: false,
         kind: "stay",
         lodging: true,
@@ -407,7 +407,7 @@ export function buildPacking() {
       "Travel insurance",
       "E-tickets / boarding passes (NH804 · NH843)",
       "Japan Navi Journey itinerary (offline)",
-      "Hotel confirmations (Daiwa Roynet · Plaza Sakae · Nezame · YAMANIWA · Richmond · Washington)",
+      "Hotel confirmations (Daiwa Roynet · Plaza Sakae · Nezame · YAMANIWA · Traveler's Inn Takagi · Washington)",
       "Highway bus tickets (Shinjuku→Nagoya · Matsumoto→Shinjuku, by Japan Navi)",
     ],
     "👕 Clothing": [
@@ -483,12 +483,13 @@ export function buildDocs(days: DemoDay[], totalBudget: number) {
       "ticket",
       [
         `Japan Navi Journey · Nakasendo Walking Journey`,
-        `Package total (tax included): JPY ${totalBudget.toLocaleString()} (for two)`,
+        `Package total after 1% discount (tax included): JPY ${totalBudget.toLocaleString()} (for two)`,
         `Tax excluded: JPY ${PACKAGE_TAX_EXCL.toLocaleString()} · Consumption tax 10%: JPY ${PACKAGE_TAX.toLocaleString()}`,
         `Deposit received: JPY ${PACKAGE_DEPOSIT.toLocaleString()} · Remaining balance: JPY ${PACKAGE_BALANCE.toLocaleString()}`,
+        `Itinerary is provisional; changes may affect final price.`,
         ``,
         `Included:`,
-        `· ${nights} overnight stay(s): Daiwa Roynet Nagoya · Plaza Hotel Sakae Nakatsugawa · Nezame Hotel (2) · YAMANIWA INN · Richmond Hotel Matsumoto (2) · Shinjuku Washington Hotel`,
+        `· ${nights} overnight stay(s): Daiwa Roynet Nagoya · Plaza Hotel Sakae Nakatsugawa · Nezame Hotel (2) · YAMANIWA INN · Traveler's Inn Takagi / 旅の宿たかぎ (2) · Shinjuku Washington Hotel`,
         `· Meals: ${breakfasts} breakfast(s), ${dinners} dinner(s) (Nezame B&D ×2 nights; YAMANIWA breakfast)`,
         buses
           ? `· Daytime highway buses by Japan Navi: ${buses}`
@@ -524,9 +525,10 @@ export function buildDocs(days: DemoDay[], totalBudget: number) {
       [
         `Tax excluded: JPY ${PACKAGE_TAX_EXCL.toLocaleString()}`,
         `Consumption tax 10%: JPY ${PACKAGE_TAX.toLocaleString()}`,
-        `Tax included total: JPY ${BASE_PACKAGE.toLocaleString()}`,
+        `Tax included total after 1% discount: JPY ${BASE_PACKAGE.toLocaleString()}`,
         `Deposit received: JPY ${PACKAGE_DEPOSIT.toLocaleString()}`,
         `Remaining balance (to be invoiced): JPY ${PACKAGE_BALANCE.toLocaleString()}`,
+        `Itinerary is provisional; changes may affect final price.`,
         ``,
         `Bank transfer preferred.`,
         `Card payments: 2% surcharge.`,
