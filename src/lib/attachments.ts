@@ -1,7 +1,9 @@
 /* ── ATTACHMENT UTILITIES ─────────────────────────────────────────────────── */
 
+export type AttachmentData = { data: string; type: string; name: string }
+
 // Compress image file to base64 (max 800px, jpeg 0.78)
-export const compressImage = (file) =>
+export const compressImage = (file: File): Promise<AttachmentData> =>
   new Promise((resolve) => {
     const reader = new FileReader()
     reader.onload = (ev) => {
@@ -12,19 +14,20 @@ export const compressImage = (file) =>
         const canvas = document.createElement("canvas")
         canvas.width = img.width * ratio
         canvas.height = img.height * ratio
-        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
         resolve({ data: canvas.toDataURL("image/jpeg", 0.78), type: "image/jpeg", name: file.name })
       }
-      img.src = ev.target.result
+      img.src = ev.target!.result as string
     }
     reader.readAsDataURL(file)
   })
 
 // Read file as base64 (for PDFs / non-image docs)
-export const readFileAsBase64 = (file) =>
+export const readFileAsBase64 = (file: File): Promise<AttachmentData> =>
   new Promise((resolve) => {
     const reader = new FileReader()
-    reader.onload = (ev) => resolve({ data: ev.target.result, type: file.type, name: file.name })
+    reader.onload = (ev) =>
+      resolve({ data: ev.target!.result as string, type: file.type, name: file.name })
     reader.readAsDataURL(file)
   })
 
@@ -38,9 +41,9 @@ export const formatBytes = (str) => {
 }
 
 // Process uploaded files → attachment objects
-export const processFiles = async (fileList) => {
+export const processFiles = async (fileList: FileList | File[]) => {
   const results = []
-  for (const file of Array.from(fileList)) {
+  for (const file of Array.from(fileList) as File[]) {
     if (file.size > 10 * 1024 * 1024) continue // skip >10MB
     const att = isImage(file.type) ? await compressImage(file) : await readFileAsBase64(file)
     results.push({ id: Date.now() + Math.random(), ...att, uploadedAt: new Date().toISOString() })

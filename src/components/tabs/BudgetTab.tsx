@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { callAi } from "../../lib/ai"
-import { compressImage, isImage, processFiles } from "../../lib/attachments"
+import { compressImage, fileExt, fileIcon, isImage, processFiles } from "../../lib/attachments"
 import { CURRENCIES, EXPENSE_CATS, countryFlag } from "../../lib/constants"
 import { LS } from "../../lib/storage"
 import { AttachStrip } from "../shared/AttachStrip"
@@ -40,6 +40,7 @@ export function BudgetTab({
     splitEnabled: false,
     splitWith: [],
     customSplit: {},
+    receiptImage: null as string | null,
   }
   const [form, setForm] = useState(EMPTY_EXP)
   const [converting, setConverting] = useState(false)
@@ -174,7 +175,7 @@ export function BudgetTab({
     .sort((a, b) => b.total - a.total)
 
   // Balance sheet
-  const balanceNet = {}
+  const balanceNet: Record<string, number> = {}
   const initP = (n) => {
     if (balanceNet[n] === undefined) balanceNet[n] = 0
   }
@@ -1032,7 +1033,9 @@ If you can't read a field clearly, make your best inference and lower confidence
           }
 
           // Build filter options from categories actually used
-          const usedCats = [...new Set(expenses.map((e) => e.cat))].slice(0, 5)
+          const usedCats = [...new Set(expenses.map((e) => e.cat))]
+            .filter((c): c is string => typeof c === "string" && c.length > 0)
+            .slice(0, 5)
 
           // Apply filter
           const filtered = expenses.filter((exp) => {
@@ -1490,7 +1493,7 @@ If you can't read a field clearly, make your best inference and lower confidence
           )
         })()}
 
-      {viewingAtt && <ViewerModal att={viewingAtt} onClose={() => setViewingAtt(null)} />}
+      {viewingAtt && <ViewerModal att={viewingAtt} onClose={() => setViewingAtt(null)} onDelete={undefined} />}
 
       {/* BALANCES */}
       {activeTab === "balances" && (
@@ -1906,96 +1909,3 @@ If you can't read a field clearly, make your best inference and lower confidence
     </div>
   )
 }
-// ── Airline IATA database ─────────────────────────────────────────────────────
-export const AIRLINES = {
-  AA: { name: "American Airlines", web: "https://aa.com/booking/find-reservations" },
-  AC: { name: "Air Canada", web: "https://aircanada.com/en-ca/account/manage-booking" },
-  AF: { name: "Air France", web: "https://airfrance.com/en/common/reservation/reservation.do" },
-  AI: { name: "Air India", web: "https://airindia.in/manage-booking.htm" },
-  AK: { name: "AirAsia", web: "https://airasia.com/managebooking" },
-  AM: {
-    name: "Aeroméxico",
-    web: "https://aeromexico.com/en-us/travel-information/manage-your-trip",
-  },
-  AY: { name: "Finnair", web: "https://finnair.com/en/manage" },
-  AZ: { name: "ITA Airways", web: "https://itaairways.com/en/manage-your-booking" },
-  BA: { name: "British Airways", web: "https://britishairways.com/travel/managebooking" },
-  BG: { name: "Biman Bangladesh", web: "https://biman-airlines.com" },
-  BI: { name: "Royal Brunei", web: "https://royalbrunei.com/manage-booking" },
-  BR: { name: "EVA Air", web: "https://evaair.com/en-global/manage-booking" },
-  BX: { name: "Air Busan", web: "https://airbusan.com/en" },
-  CA: { name: "Air China", web: "https://airchina.com/en-US/manage_booking" },
-  CI: { name: "China Airlines", web: "https://www.china-airlines.com/en-us/manage-booking" },
-  CX: { name: "Cathay Pacific", web: "https://cathaypacific.com/cx/en_HK/manage-booking" },
-  CZ: { name: "China Southern", web: "https://csair.com/en/booking/managebooking" },
-  DL: { name: "Delta Air Lines", web: "https://delta.com/us/en/need-help/manage-booking" },
-  EK: { name: "Emirates", web: "https://emirates.com/english/manage-booking" },
-  ET: { name: "Ethiopian Airlines", web: "https://ethiopianairlines.com/en/manage" },
-  EY: { name: "Etihad Airways", web: "https://etihad.com/en-us/manage" },
-  FD: { name: "Thai AirAsia", web: "https://airasia.com/managebooking" },
-  FJ: { name: "Fiji Airways", web: "https://fijiairways.com/manage-my-booking" },
-  FZ: { name: "flydubai", web: "https://flydubai.com/en/plan/manage-booking" },
-  G9: { name: "Air Arabia", web: "https://airarabia.com/en/manage-bookings" },
-  GF: { name: "Gulf Air", web: "https://gulfair.com/en/manage-booking" },
-  HA: { name: "Hawaiian Airlines", web: "https://hawaiianairlines.com/manage-flights" },
-  HU: { name: "Hainan Airlines", web: "https://hainanairlines.com/en/managebooking" },
-  IB: { name: "Iberia", web: "https://iberia.com/en/yourbookings" },
-  IR: { name: "Iran Air", web: "https://iranair.com" },
-  IT: { name: "Tigerair Taiwan", web: "https://tigerairtw.com/en-tw/manage-booking" },
-  JJ: { name: "LATAM Brasil", web: "https://latamairlines.com/us/en/manage-your-trip" },
-  JL: { name: "Japan Airlines", web: "https://jal.co.jp/en/booking/reserve" },
-  JQ: { name: "Jetstar", web: "https://jetstar.com/au/en/manage-booking" },
-  KA: { name: "Cathay Dragon", web: "https://cathaypacific.com" },
-  KE: { name: "Korean Air", web: "https://koreanair.com/booking/manage-booking" },
-  KL: { name: "KLM", web: "https://klm.com/en-us/travel/booking/manage" },
-  KQ: { name: "Kenya Airways", web: "https://kenya-airways.com/manage-booking" },
-  LA: { name: "LATAM Airlines", web: "https://latamairlines.com/us/en/manage-your-trip" },
-  LH: { name: "Lufthansa", web: "https://lufthansa.com/en/homepage/myflights" },
-  LO: { name: "LOT Polish Airlines", web: "https://lot.com/en/my-lot" },
-  LX: { name: "Swiss International", web: "https://swiss.com/en/booking/myflights" },
-  MH: { name: "Malaysia Airlines", web: "https://malaysiaairlines.com/my/en/manage-booking" },
-  MK: { name: "Air Mauritius", web: "https://airmauritius.com/managebooking" },
-  MS: { name: "EgyptAir", web: "https://egyptair.com/en/eguest" },
-  MU: { name: "China Eastern", web: "https://ceair.com/en/booking/manageOrder" },
-  NH: { name: "ANA", web: "https://ana.co.jp/en/us/manage-booking" },
-  NZ: { name: "Air New Zealand", web: "https://airnewzealand.com/manage-booking" },
-  OK: { name: "Czech Airlines", web: "https://csa.cz/en/booking-management" },
-  OS: { name: "Austrian Airlines", web: "https://austrian.com/en/myflights" },
-  OZ: { name: "Asiana Airlines", web: "https://flyasiana.com/C/US/EN/manage" },
-  PC: { name: "Pegasus Airlines", web: "https://flypgs.com/en/manage-booking" },
-  PK: { name: "Pakistan International", web: "https://piac.aero" },
-  PR: {
-    name: "Philippine Airlines",
-    web: "https://philippineairlines.com/en/ph/home/manage-booking",
-  },
-  PX: { name: "Air Niugini", web: "https://airniugini.com.pg" },
-  QF: { name: "Qantas", web: "https://qantas.com/au/en/manage-booking" },
-  QR: { name: "Qatar Airways", web: "https://qatarairways.com/en/manage.html" },
-  RJ: { name: "Royal Jordanian", web: "https://rj.com/en/plan/manage-booking" },
-  SA: { name: "South African Airways", web: "https://flysaa.com/manage" },
-  SK: { name: "SAS", web: "https://sas.se/en/travel-info/manage" },
-  SN: {
-    name: "Brussels Airlines",
-    web: "https://brusselsairlines.com/en/your-trip/manage-booking",
-  },
-  SQ: {
-    name: "Singapore Airlines",
-    web: "https://singaporeair.com/en_UK/us/travel-info/manage-booking",
-  },
-  SV: { name: "Saudia", web: "https://saudia.com/en/manage-booking" },
-  TG: { name: "Thai Airways", web: "https://thaiairways.com/en_TH/manage_bookings" },
-  TK: { name: "Turkish Airlines", web: "https://turkishairlines.com/en-us/flights/manage-booking" },
-  TP: { name: "TAP Air Portugal", web: "https://tapairportugal.com/en/manage-your-booking" },
-  TR: { name: "Scoot", web: "https://flyscoot.com/en/manage-booking" },
-  UA: { name: "United Airlines", web: "https://united.com/ual/en/us/reservation" },
-  UL: { name: "SriLankan Airlines", web: "https://srilankan.com/en-us/manage-booking" },
-  UX: { name: "Air Europa", web: "https://aireuropa.com/en/my-booking" },
-  VN: { name: "Vietnam Airlines", web: "https://vietnamairlines.com/en/the-gioi/manage-booking" },
-  VY: { name: "Vueling", web: "https://vueling.com/en/booking-management" },
-  WN: { name: "Southwest Airlines", web: "https://southwest.com/air/manage-reservation" },
-  WS: { name: "WestJet", web: "https://westjet.com/en-ca/manage-trips" },
-  XY: { name: "flynas", web: "https://flynas.com/en/manage-booking" },
-  ZI: { name: "Aigle Azur", web: "https://aigle-azur.com" },
-}
-
-// Booking platform detection by reference pattern

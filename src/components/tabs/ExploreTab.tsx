@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { callAi } from "../../lib/ai"
-import { WC_DESC } from "../../lib/constants"
+import { AIRLINES } from "../../lib/airlines"
+import { CURRENCIES, WC_DESC } from "../../lib/constants"
 import { detectPlatform, platformLinks } from "../../lib/explore"
 import { LS } from "../../lib/storage"
 export function ExploreTab({
@@ -71,6 +72,8 @@ export function ExploreTab({
     location: "",
     coords: null,
     generatedAt: "",
+    headline: "",
+    errorMsg: "",
   })
   // step: idle | locating | generating | ready | error
 
@@ -143,6 +146,7 @@ export function ExploreTab({
           location: "",
           coords: null,
           generatedAt: "",
+          headline: "",
           errorMsg: "Allow location access or set a trip destination to get suggestions.",
         })
         return
@@ -220,6 +224,7 @@ Suggest 3 things to do right now.`,
         location: locationStr,
         coords,
         generatedAt: new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" }),
+        errorMsg: "",
       }
       LS.set(cacheKey, result)
       setDisc(result)
@@ -230,6 +235,7 @@ Suggest 3 things to do right now.`,
         location: locationStr,
         coords,
         generatedAt: "",
+        headline: "",
         errorMsg: "Could not generate suggestions. Check your connection.",
       })
     }

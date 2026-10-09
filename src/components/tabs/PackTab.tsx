@@ -2,10 +2,12 @@ import { useState } from "react"
 import { callAi } from "../../lib/ai"
 import { DEFAULT_PACKING, WC_DESC, WC_ICON } from "../../lib/constants"
 import { LS } from "../../lib/storage"
+import { PACKING_TEMPLATES } from "./MemoriesTab"
 export function PackTab({
   packing,
   togglePacking,
   addPackingItem,
+  savePacking,
   packingTotal,
   packingDone,
   trip,
@@ -13,7 +15,6 @@ export function PackTab({
 }) {
   const [newItems, setNewItems] = useState({})
   const [collapsed, setCollapsed] = useState({})
-  const [showCal, setShowCal] = useState(false)
   const pct = packingTotal ? Math.round((packingDone / packingTotal) * 100) : 0
 
   // ── Re-check state ────────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ export function PackTab({
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const depDate = trip.startDate ? new Date(trip.startDate) : null
-  const daysUntil = depDate ? Math.ceil((depDate - today) / 86400000) : null
+  const daysUntil = depDate ? Math.ceil((depDate.getTime() - today.getTime()) / 86400000) : null
   const showAlert =
     daysUntil !== null &&
     daysUntil >= -1 &&
@@ -91,7 +92,9 @@ export function PackTab({
       setRecheck((p) => ({ ...p, step: "analyzing", forecast: days }))
 
       // 3. Build packing list text
-      const packingText = Object.entries(packing)
+      const packingText = (
+        Object.entries(packing) as [string, { name: string; checked?: boolean }[]][]
+      )
         .map(
           ([cat, items]) =>
             `${cat}:\n` +
@@ -101,7 +104,9 @@ export function PackTab({
 
       const tripDuration =
         trip.startDate && trip.endDate
-          ? Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1
+          ? Math.round(
+              (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / 86400000,
+            ) + 1
           : "unknown"
       const activities = itinerary.flatMap((d) => d.activities.map((a) => a.text)).filter(Boolean)
 
@@ -211,20 +216,20 @@ Analyse this and return the JSON re-check report.`,
 
   // Count how many items from a template are already in the packing list
   const countAlready = (tpl) => {
-    const allItems = Object.values(packing)
-      .flat()
-      .map((i) => i.name.toLowerCase())
-    return Object.values(tpl.items)
-      .flat()
-      .filter((name) => allItems.includes(name.toLowerCase())).length
+    const allItems = (Object.values(packing).flat() as { name: string }[]).map((i) =>
+      i.name.toLowerCase(),
+    )
+    return (Object.values(tpl.items).flat() as string[]).filter((name) =>
+      allItems.includes(name.toLowerCase()),
+    ).length
   }
 
-  const totalItems = (tpl) => Object.values(tpl.items).flat().length
+  const totalItems = (tpl) => (Object.values(tpl.items).flat() as string[]).length
 
   const importTemplate = (tpl, mode) => {
-    const existing = Object.values(packing)
-      .flat()
-      .map((i) => i.name.toLowerCase())
+    const existing = (Object.values(packing).flat() as { name: string }[]).map((i) =>
+      i.name.toLowerCase(),
+    )
     const cats = Object.keys(packing)
 
     if (mode === "replace") {
@@ -233,7 +238,7 @@ Analyse this and return the JSON re-check report.`,
         fresh[cat] = items.map((name, i) => ({ id: `${cat}-${i}`, name, checked: false }))
       })
       // Add template items on top
-      Object.entries(tpl.items).forEach(([cat, items]) => {
+      ;(Object.entries(tpl.items) as [string, string[]][]).forEach(([cat, items]) => {
         const matched =
           cats.find((c) => c === cat) ||
           cats.find((c) => c.includes(cat.split(" ").slice(1, 2)[0] || "")) ||
@@ -243,11 +248,11 @@ Analyse this and return the JSON re-check report.`,
           fresh[matched].push({ id: `tpl_${tpl.id}_${i}_${Date.now()}`, name, checked: false })
         })
       })
-      addPackingItem && savePacking && savePacking(fresh)
+      savePacking(fresh)
     } else {
       // Merge: add items not already present
       const newPack = JSON.parse(JSON.stringify(packing))
-      Object.entries(tpl.items).forEach(([cat, items]) => {
+      ;(Object.entries(tpl.items) as [string, string[]][]).forEach(([cat, items]) => {
         const matched =
           cats.find((c) => c === cat) ||
           cats.find((c) => c.includes(cat.split(" ").slice(1, 2)[0] || "")) ||
@@ -304,7 +309,10 @@ Analyse this and return the JSON re-check report.`,
     const lines = []
     if (trip.destination) lines.push(`Destination: ${trip.destination}`)
     if (trip.startDate && trip.endDate) {
-      const days = Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1
+      const days =
+        Math.round(
+          (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / 86400000,
+        ) + 1
       lines.push(`Dates: ${trip.startDate} to ${trip.endDate} (${days} days)`)
       // infer season from month
       const month = new Date(trip.startDate).getMonth()
@@ -334,9 +342,7 @@ Analyse this and return the JSON re-check report.`,
 
   // Get all existing item names for dedup
   const existingNames = new Set(
-    Object.values(packing)
-      .flat()
-      .map((i) => i.name.toLowerCase()),
+    (Object.values(packing).flat() as { name: string }[]).map((i) => i.name.toLowerCase()),
   )
 
   const generateSuggestions = async () => {
@@ -770,12 +776,12 @@ Rules:
         (() => {
           const tpl = PACKING_TEMPLATES.find((t) => t.id === selectedTemplate)
           if (!tpl) return null
-          const allItems = Object.values(packing)
-            .flat()
-            .map((i) => i.name.toLowerCase())
-          const newCount = Object.values(tpl.items)
-            .flat()
-            .filter((n) => !allItems.includes(n.toLowerCase())).length
+          const allItems = (Object.values(packing).flat() as { name: string }[]).map((i) =>
+            i.name.toLowerCase(),
+          )
+          const newCount = (Object.values(tpl.items).flat() as string[]).filter(
+            (n) => !allItems.includes(n.toLowerCase()),
+          ).length
           const alreadyCount = totalItems(tpl) - newCount
 
           return (
@@ -916,7 +922,10 @@ Rules:
             trip.endDate &&
             (() => {
               const d =
-                Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1
+                Math.round(
+                  (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) /
+                    86400000,
+                ) + 1
               return <span className="context-tag">🗓️ {d} days</span>
             })()}
           {itinerary.flatMap((d) => d.activities).length > 0 && (
@@ -1065,7 +1074,9 @@ Rules:
       </div>
 
       {/* Existing packing categories */}
-      {Object.entries(packing).map(([cat, items]) => {
+      {(
+        Object.entries(packing) as [string, { id: string; name: string; checked?: boolean }[]][]
+      ).map(([cat, items]) => {
         const catDone = items.filter((i) => i.checked).length
         const isCol = collapsed[cat]
         return (

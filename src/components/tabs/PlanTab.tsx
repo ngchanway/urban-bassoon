@@ -18,9 +18,15 @@ export function PlanTab({
   onQuickMemory,
 }) {
   const [newActs, setNewActs] = useState({})
+  const [showCal, setShowCal] = useState(false)
   const tripDays =
     trip.startDate && trip.endDate
-      ? Math.max(0, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1)
+      ? Math.max(
+          0,
+          Math.round(
+            (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / 86400000,
+          ) + 1,
+        )
       : null
 
   const handleAdd = (dayId) => {

@@ -1245,6 +1245,7 @@ export default function App() {
               packing={packing}
               togglePacking={togglePacking}
               addPackingItem={addPackingItem}
+              savePacking={savePacking}
               packingTotal={packingTotal}
               packingDone={packingDone}
               trip={trip}
