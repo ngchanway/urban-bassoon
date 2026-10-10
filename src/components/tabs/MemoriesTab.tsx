@@ -1,6 +1,7 @@
 import L from "leaflet"
 import { useEffect, useRef, useState } from "react"
 import { callAi } from "../../lib/ai"
+import { cartoDarkRasterUrlTemplate } from "../../lib/maps/cartoBasemap"
 export function MemoriesTab({
   memories,
   addMemory,
@@ -10,8 +11,8 @@ export function MemoriesTab({
   quickMemoryCtx,
   clearQuickMemory,
 }) {
-  const mapRef = useRef(null)
-  const leafletMap = useRef(null)
+  const mapRef = useRef<HTMLDivElement | null>(null)
+  const leafletMap = useRef<L.Map | null>(null)
 
   // Pre-fill form from quick-memory context (tapped 📸 on an activity)
   useEffect(() => {
@@ -25,8 +26,8 @@ export function MemoriesTab({
     }))
     if (clearQuickMemory) clearQuickMemory()
   }, [quickMemoryCtx])
-  const markersRef = useRef({})
-  const pendingMarkerRef = useRef(null)
+  const markersRef = useRef<Record<string, L.Marker>>({})
+  const pendingMarkerRef = useRef<L.Marker | null>(null)
 
   const [pinForm, setPinForm] = useState(null)
   const [form, setForm] = useState({
@@ -243,8 +244,9 @@ Write the travel story.`,
     if (!mapRef.current || leafletMap.current) return
     /* L from leaflet */
     const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer(cartoDarkRasterUrlTemplate(), {
       maxZoom: 19,
+      subdomains: "abcd",
     }).addTo(map)
     map.setView([20, 0], 2)
     leafletMap.current = map
@@ -342,6 +344,8 @@ Write the travel story.`,
     setPhotoCaption({ loading: false, result: null, error: "" }) // clear old caption
     const reader = new FileReader()
     reader.onload = (ev) => {
+      const result = ev.target?.result
+      if (typeof result !== "string") return
       const img = new Image()
       img.onload = () => {
         const canvas = document.createElement("canvas")
@@ -353,7 +357,7 @@ Write the travel story.`,
         setForm((f) => ({ ...f, photo: b64 }))
         analyzePhoto(b64) // 🔍 auto-analyse with Claude vision
       }
-      img.src = ev.target.result
+      img.src = result
     }
     reader.readAsDataURL(file)
   }

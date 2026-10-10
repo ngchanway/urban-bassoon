@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { addDays, downloadICS, gcalDayUrl, generateICS, outlookDayUrl } from "../../lib/calendar"
 import { SwipeableActivity } from "../shared/SwipeableActivity"
+import { PlanRouteMap } from "./PlanRouteMap"
 export function PlanTab({
   trip,
   saveTrip,
@@ -16,6 +17,7 @@ export function PlanTab({
   navigateTo,
   onQuickExpense,
   onQuickMemory,
+  activeTripId,
 }) {
   const [newActs, setNewActs] = useState({})
   const [showCal, setShowCal] = useState(false)
@@ -251,6 +253,13 @@ export function PlanTab({
           </div>
         )
       })()}
+
+      <PlanRouteMap
+        trip={trip}
+        itinerary={itinerary}
+        memories={memories}
+        tripKey={activeTripId || trip.destination || "trip"}
+      />
 
       <div className="card">
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>

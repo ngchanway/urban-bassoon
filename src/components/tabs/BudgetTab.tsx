@@ -1493,7 +1493,9 @@ If you can't read a field clearly, make your best inference and lower confidence
           )
         })()}
 
-      {viewingAtt && <ViewerModal att={viewingAtt} onClose={() => setViewingAtt(null)} onDelete={undefined} />}
+      {viewingAtt && (
+        <ViewerModal att={viewingAtt} onClose={() => setViewingAtt(null)} onDelete={undefined} />
+      )}
 
       {/* BALANCES */}
       {activeTab === "balances" && (

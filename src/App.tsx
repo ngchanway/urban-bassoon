@@ -1285,6 +1285,7 @@ export default function App() {
               navigateTo={navigateTo}
               onQuickExpense={(a, d) => setQuickExpense({ act: a, day: d })}
               onQuickMemory={onQuickMemory}
+              activeTripId={activeTripId}
             />
           )}
           {tab === 2 && (

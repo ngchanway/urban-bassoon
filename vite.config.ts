@@ -33,8 +33,17 @@ export default defineConfig({
             },
           },
           {
+            urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "tc-map-tiles",
+              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern:
-              /^https:\/\/(geocoding-api\.open-meteo\.com|api\.open-meteo\.com|api\.frankfurter\.app|nominatim\.openstreetmap\.org|basemaps\.cartocdn\.com)/i,
+              /^https:\/\/(geocoding-api\.open-meteo\.com|api\.open-meteo\.com|api\.frankfurter\.app|nominatim\.openstreetmap\.org)/i,
             handler: "NetworkFirst",
             options: { cacheName: "api-cache", networkTimeoutSeconds: 10 },
           },

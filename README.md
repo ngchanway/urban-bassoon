@@ -41,10 +41,14 @@ A mobile-first travel companion PWA — plan trips, pack, budget, explore, captu
 git clone https://github.com/chanwayELGO/urban-bassoon.git
 cd urban-bassoon
 npm install
+cp .env.example .env.local
+# Add VITE_CARTO_BASEMAPS_API_KEY from https://carto.com/basemaps/apikey/
 npm run dev
 ```
 
 Open http://localhost:5173
+
+Maps (Plan Route map, Memories) need a [CARTO Basemaps](https://carto.com/basemaps/apikey/) API key in `.env.local`. Restart the dev server after changing it. The key is inlined into the client bundle at build time (expected for basemap keys); do not commit `.env.local`.
 
 ### Local AI proxy (optional)
 
@@ -102,7 +106,7 @@ urban-bassoon/
 1. Connect this repo to [Cloudflare Pages](https://pages.cloudflare.com/)
 2. Build command: `npm run build`
 3. Output directory: `dist`
-4. Add environment variable: `GEMINI_API_KEY`
+4. Add environment variables: `GEMINI_API_KEY` and `VITE_CARTO_BASEMAPS_API_KEY` (Production + Preview; Vite reads `VITE_*` at **build** time)
 5. Workers AI is enabled via `wrangler.toml` (`[ai]` binding)
 
 ### GitHub Pages
@@ -113,6 +117,7 @@ A workflow at `.github/workflows/deploy-pages.yml` builds and deploys `dist` on 
 
 | Variable | Where | Required |
 |----------|-------|----------|
+| `VITE_CARTO_BASEMAPS_API_KEY` | `.env.local` / Cloudflare Pages build env | Recommended (Plan + Memories basemap) |
 | `GEMINI_API_KEY` | Cloudflare Pages / `.dev.vars` | Recommended (primary AI) |
 | Workers AI | Cloudflare account | Automatic fallback |
 
