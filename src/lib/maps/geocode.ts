@@ -3,7 +3,7 @@ import { LS } from "../storage"
 export type GeoHit = { lat: number; lng: number; label: string; at: string }
 
 const GEO_KEY = "tc_plan_geo"
-const MIN_INTERVAL_MS = 1100
+const MIN_INTERVAL_MS = 200
 
 let lastRequestAt = 0
 let chain: Promise<unknown> = Promise.resolve()
@@ -26,7 +26,25 @@ async function throttle() {
   lastRequestAt = Date.now()
 }
 
-/** Geocode a place string via Nominatim; cached in tc_plan_geo. */
+/** Merge known hits into tc_plan_geo (e.g. demo seed). */
+export function mergeGeocodeCache(entries: Record<string, Omit<GeoHit, "at"> & { at?: string }>) {
+  const next = loadCache()
+  const now = new Date().toISOString()
+  for (const [query, hit] of Object.entries(entries)) {
+    const key = normQuery(query)
+    if (!key) continue
+    if (!Number.isFinite(hit.lat) || !Number.isFinite(hit.lng)) continue
+    next[key] = {
+      lat: hit.lat,
+      lng: hit.lng,
+      label: hit.label || query,
+      at: hit.at || now,
+    }
+  }
+  saveCache(next)
+}
+
+/** Geocode via /api/geocode (Nominatim proxy); cached in tc_plan_geo. */
 export function geocodeQuery(query: string): Promise<GeoHit | null> {
   const q = query.trim()
   if (!q) return Promise.resolve(null)
@@ -40,22 +58,24 @@ export function geocodeQuery(query: string): Promise<GeoHit | null> {
     if (typeof navigator !== "undefined" && !navigator.onLine) return null
 
     await throttle()
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`
+    const url = `/api/geocode?q=${encodeURIComponent(q)}`
     try {
-      const res = await fetch(url, {
-        headers: { Accept: "application/json" },
-      })
+      const res = await fetch(url, { headers: { Accept: "application/json" } })
       if (!res.ok) return null
-      const rows = (await res.json()) as Array<{ lat: string; lon: string; display_name?: string }>
-      const hit = rows[0]
-      if (!hit) return null
+      const data = (await res.json()) as {
+        lat?: number
+        lng?: number
+        label?: string
+        error?: string
+      } | null
+      if (!data || typeof data.lat !== "number" || typeof data.lng !== "number") return null
+      if (!Number.isFinite(data.lat) || !Number.isFinite(data.lng)) return null
       const entry: GeoHit = {
-        lat: Number(hit.lat),
-        lng: Number(hit.lon),
-        label: hit.display_name || q,
+        lat: data.lat,
+        lng: data.lng,
+        label: data.label || q,
         at: new Date().toISOString(),
       }
-      if (!Number.isFinite(entry.lat) || !Number.isFinite(entry.lng)) return null
       const next = loadCache()
       next[key] = entry
       saveCache(next)

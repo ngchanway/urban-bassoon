@@ -5,8 +5,33 @@
  * Adjust BASELINE_DAYS / guestCount; budgetFromItinerary keeps tc_budget in sync.
  */
 
+import { mergeGeocodeCache } from "../maps/geocode"
 import { LS } from "../storage"
 import { snapshotTrip } from "../trip"
+
+/** Known places for Plan Route map (seeded into tc_plan_geo). */
+const DEMO_GEO: Record<string, { lat: number; lng: number; label: string }> = {
+  singapore: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+  narita: { lat: 35.7767, lng: 140.3185, label: "Narita" },
+  "narita airport": { lat: 35.772, lng: 140.3929, label: "Narita Airport" },
+  shinjuku: { lat: 35.6938, lng: 139.7034, label: "Shinjuku" },
+  nagoya: { lat: 35.1815, lng: 136.9066, label: "Nagoya" },
+  nakatsugawa: { lat: 35.4875, lng: 137.5006, label: "Nakatsugawa" },
+  "nakatsugawa-juku": { lat: 35.4875, lng: 137.5006, label: "Nakatsugawa-juku" },
+  magome: { lat: 35.5264, lng: 137.5647, label: "Magome" },
+  tsumago: { lat: 35.5772, lng: 137.595, label: "Tsumago" },
+  "kiso valley": { lat: 35.7, lng: 137.7, label: "Kiso Valley" },
+  kiso: { lat: 35.7, lng: 137.7, label: "Kiso" },
+  narai: { lat: 35.9703, lng: 137.8125, label: "Narai" },
+  "narai-juku": { lat: 35.9703, lng: 137.8125, label: "Narai-juku" },
+  matsumoto: { lat: 36.2381, lng: 137.972, label: "Matsumoto" },
+  "matsumoto castle": { lat: 36.2386, lng: 137.9689, label: "Matsumoto Castle" },
+  haneda: { lat: 35.5494, lng: 139.7798, label: "Haneda" },
+  tokyo: { lat: 35.6762, lng: 139.6503, label: "Tokyo" },
+  nakasendo: { lat: 35.55, lng: 137.55, label: "Nakasendo" },
+  "torii pass": { lat: 35.99, lng: 137.75, label: "Torii Pass" },
+  "torii pass area": { lat: 35.99, lng: 137.75, label: "Torii Pass area" },
+}
 
 export const DEMO_TRIP_ID = "demo_nakasendo"
 export const DEMO_LOADED_KEY = "tc_demo_nakasendo_loaded"
@@ -577,6 +602,11 @@ export type SeedResult = {
   routeBanner: string
 }
 
+/** Merge known Nakasendo place coords into tc_plan_geo (safe to call anytime). */
+export function seedNakasendoGeocodeCache() {
+  mergeGeocodeCache(DEMO_GEO)
+}
+
 /** Write demo flats + trip registry. Call applyTripFlats() in App after. */
 export function seedNakasendoDemo(opts?: {
   days?: DemoDay[]
@@ -620,6 +650,8 @@ export function seedNakasendoDemo(opts?: {
   LS.set("tc_sync_last_at", "")
   LS.set("tc_chat_msgs", [])
   LS.set("tc_activation_dismissed", true)
+
+  seedNakasendoGeocodeCache()
 
   snapshotTrip(DEMO_TRIP_ID)
   LS.set(DEMO_LOADED_KEY, true)

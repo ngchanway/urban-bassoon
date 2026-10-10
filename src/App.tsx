@@ -18,6 +18,7 @@ import {
   ROUTE_BANNER,
   isJapanNaviDemoQuery,
   seedNakasendoDemo,
+  seedNakasendoGeocodeCache,
   shouldResetDemo,
 } from "./lib/demo/nakasendo"
 import { generateExportHTML } from "./lib/export"
@@ -57,6 +58,7 @@ function bootstrapJapanNaviDemo() {
     restoreTrip(DEMO_TRIP_ID)
     LS.set("tc_active_trip", DEMO_TRIP_ID)
   }
+  seedNakasendoGeocodeCache()
   return true
 }
 

@@ -7,7 +7,12 @@ import {
   downloadTilePack,
   getOfflineMapMeta,
 } from "../../lib/maps/offlineTiles"
-import { type PlanStop, boundsFromStops, resolvePlanStops } from "../../lib/maps/planStops"
+import {
+  type PlanStop,
+  boundsFromStops,
+  planStopsResolveKey,
+  resolvePlanStops,
+} from "../../lib/maps/planStops"
 
 type Props = {
   trip: { destination?: string; startDate?: string; endDate?: string }
@@ -63,6 +68,8 @@ export function PlanRouteMap({ trip, itinerary, memories, tripKey }: Props) {
   const [progress, setProgress] = useState<PackProgress | null>(null)
   const [packError, setPackError] = useState("")
 
+  const resolveKey = planStopsResolveKey(trip, itinerary, memories)
+
   useEffect(() => {
     const on = () => setOnline(true)
     const off = () => setOnline(false)
@@ -77,7 +84,12 @@ export function PlanRouteMap({ trip, itinerary, memories, tripKey }: Props) {
   useEffect(() => {
     let cancelled = false
     setResolving(true)
-    resolvePlanStops(trip, itinerary, memories, { geocodeOnline: online })
+    resolvePlanStops(trip, itinerary, memories, {
+      geocodeOnline: online,
+      onPartial: (partial) => {
+        if (!cancelled) setStops(partial)
+      },
+    })
       .then((list) => {
         if (!cancelled) setStops(list)
       })
@@ -87,7 +99,7 @@ export function PlanRouteMap({ trip, itinerary, memories, tripKey }: Props) {
     return () => {
       cancelled = true
     }
-  }, [trip.destination, itinerary, memories, online])
+  }, [resolveKey, online])
 
   useEffect(() => {
     if (!mapEl.current || mapRef.current) return
@@ -196,6 +208,7 @@ export function PlanRouteMap({ trip, itinerary, memories, tripKey }: Props) {
         )}
         {resolving && <span>· Locating stops…</span>}
         {!resolving && stops.length > 0 && <span>· {stops.length} stops</span>}
+        {resolving && stops.length > 0 && <span>· {stops.length} found…</span>}
       </div>
       {!hasCartoBasemapKey() && (
         <div style={{ fontSize: 12, color: "rgba(230,217,194,0.55)", marginTop: 6 }}>
