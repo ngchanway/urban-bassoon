@@ -6,12 +6,19 @@
  */
 
 import { mergeGeocodeCache } from "../maps/geocode"
+import { mergePlaceNotes } from "../maps/placeNotes"
 import { LS } from "../storage"
 import { snapshotTrip } from "../trip"
 
 /** Known places for Plan Route map (seeded into tc_plan_geo). */
 const DEMO_GEO: Record<string, { lat: number; lng: number; label: string }> = {
-  singapore: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+  singapore: { lat: 1.3644, lng: 103.9915, label: "Singapore Changi Airport" },
+  "singapore changi airport": {
+    lat: 1.3644,
+    lng: 103.9915,
+    label: "Singapore Changi Airport",
+  },
+  changi: { lat: 1.3644, lng: 103.9915, label: "Singapore Changi Airport" },
   narita: { lat: 35.7767, lng: 140.3185, label: "Narita" },
   "narita airport": { lat: 35.772, lng: 140.3929, label: "Narita Airport" },
   shinjuku: { lat: 35.6938, lng: 139.7034, label: "Shinjuku" },
@@ -28,9 +35,146 @@ const DEMO_GEO: Record<string, { lat: number; lng: number; label: string }> = {
   "matsumoto castle": { lat: 36.2386, lng: 137.9689, label: "Matsumoto Castle" },
   haneda: { lat: 35.5494, lng: 139.7798, label: "Haneda" },
   tokyo: { lat: 35.6762, lng: 139.6503, label: "Tokyo" },
-  nakasendo: { lat: 35.55, lng: 137.55, label: "Nakasendo" },
   "torii pass": { lat: 35.99, lng: 137.75, label: "Torii Pass" },
   "torii pass area": { lat: 35.99, lng: 137.75, label: "Torii Pass area" },
+  "daiwa roynet hotel nagoya taiko-dori side": {
+    lat: 35.1706,
+    lng: 136.8816,
+    label: "Daiwa Roynet Hotel Nagoya Taiko-dori Side",
+  },
+  "daiwa roynet hotel nagoya": {
+    lat: 35.1706,
+    lng: 136.8816,
+    label: "Daiwa Roynet Hotel Nagoya",
+  },
+  "plaza hotel sakae nakatsugawa": {
+    lat: 35.4885,
+    lng: 137.5025,
+    label: "Plaza Hotel Sakae Nakatsugawa",
+  },
+  "nezame hotel": { lat: 35.7235, lng: 137.7035, label: "Nezame Hotel" },
+  "yamaniwa inn": { lat: 35.965, lng: 137.808, label: "YAMANIWA INN" },
+  "traveler's inn takagi": {
+    lat: 36.2395,
+    lng: 137.9695,
+    label: "Traveler's Inn Takagi",
+  },
+  "shinjuku washington hotel": {
+    lat: 35.6915,
+    lng: 139.7005,
+    label: "Shinjuku Washington Hotel",
+  },
+}
+
+/** Culture notes + cautions for Plan map popups (tc_place_notes). */
+const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string }> = {
+  "singapore changi airport": {
+    text: "Changi is consistently ranked among the world’s best airports — Jewel’s indoor waterfall and gardens make a long layover feel like a mini outing.",
+    caution:
+      "Leave buffer for security and immigration on early departures; follow airline bag rules for liquids and power banks.",
+  },
+  singapore: {
+    text: "Changi is consistently ranked among the world’s best airports — Jewel’s indoor waterfall and gardens make a long layover feel like a mini outing.",
+    caution:
+      "Leave buffer for security and immigration on early departures; follow airline bag rules for liquids and power banks.",
+  },
+  narita: {
+    text: "Narita Airport sits in Chiba, a train or bus ride from central Tokyo. It opened in 1978 and remains a major international gateway.",
+    caution:
+      "Budget 60–90 minutes into Shinjuku by train; late-night options thin out after the last limited express.",
+  },
+  "narita airport": {
+    text: "Narita Airport sits in Chiba, a train or bus ride from central Tokyo. It opened in 1978 and remains a major international gateway.",
+    caution:
+      "Budget 60–90 minutes into Shinjuku by train; late-night options thin out after the last limited express.",
+  },
+  shinjuku: {
+    text: "Shinjuku is Tokyo’s transit powerhouse — the station handles millions of passengers a day, with neon alleys and skyscraper views side by side.",
+    caution:
+      "The station maze is real; follow color-coded exits and allow extra time with luggage.",
+  },
+  nagoya: {
+    text: "Nagoya is the industrial heart of central Japan and a launchpad for the Kiso Valley. Castle and miso-katsu culture reward a short stop.",
+    caution:
+      "Highway buses can sell out on weekends — keep your Japan Navi booking confirmation handy.",
+  },
+  nakatsugawa: {
+    text: "Nakatsugawa-juku was a prosperous post town on the Nakasendo, famous for chestnut sweets (kurikinton) and cedar-lined approaches.",
+    caution:
+      "Rural paths can be dim after dusk; carry a light if you stroll beyond the main street.",
+  },
+  "nakatsugawa-juku": {
+    text: "Nakatsugawa-juku was a prosperous post town on the Nakasendo, famous for chestnut sweets (kurikinton) and cedar-lined approaches.",
+    caution:
+      "Rural paths can be dim after dusk; carry a light if you stroll beyond the main street.",
+  },
+  magome: {
+    text: "Magome-juku clings to a steep cobbled street with wooden inns looking over the valley — one of the most photographed Nakasendo towns.",
+    caution:
+      "Stone streets are slippery when wet; wear shoes with grip and mind your knees on the downhill toward Tsumago.",
+  },
+  tsumago: {
+    text: "Tsumago carefully preserves Edo-period streetscapes; overhead wires are hidden and cars are restricted so the post town feels timeless.",
+    caution:
+      "Respect no-photography signs at private inns; keep voices low in the evening residential lanes.",
+  },
+  narai: {
+    text: "Narai-juku, “Narai of a thousand houses,” was the wealthiest Kiso post town, stretched along a long, graceful main street.",
+    caution: "Torii Pass approaches involve climbs and weather shifts — pack layers and water.",
+  },
+  "narai-juku": {
+    text: "Narai-juku, “Narai of a thousand houses,” was the wealthiest Kiso post town, stretched along a long, graceful main street.",
+    caution: "Torii Pass approaches involve climbs and weather shifts — pack layers and water.",
+  },
+  matsumoto: {
+    text: "Matsumoto Castle’s black-and-white keep is one of Japan’s oldest original castles, set against the Japanese Alps.",
+    caution:
+      "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
+  },
+  "matsumoto castle": {
+    text: "Matsumoto Castle’s black-and-white keep is one of Japan’s oldest original castles, set against the Japanese Alps.",
+    caution:
+      "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
+  },
+  haneda: {
+    text: "Haneda sits closer to central Tokyo than Narita and is a convenient international departure point after time in the city.",
+    caution:
+      "Confirm whether your flight uses Terminal 2 or 3; allow time for the monorail or airport bus with bags.",
+  },
+  "torii pass": {
+    text: "Torii Pass links the Kiso post towns with forested climbs and shrine gates — classic Nakasendo scenery.",
+    caution:
+      "Trails can be muddy after rain; watch for bears in remote sections and carry a bell if advised locally.",
+  },
+  "daiwa roynet hotel nagoya taiko-dori side": {
+    text: "A modern business hotel beside Nagoya Station — ideal base before heading into the Kiso Valley.",
+    caution: "Station area is busy at rush hour; confirm which exit matches the hotel map.",
+  },
+  "daiwa roynet hotel nagoya": {
+    text: "A modern business hotel beside Nagoya Station — ideal base before heading into the Kiso Valley.",
+    caution: "Station area is busy at rush hour; confirm which exit matches the hotel map.",
+  },
+  "plaza hotel sakae nakatsugawa": {
+    text: "Comfortable lodging in Nakatsugawa, gateway to Magome and the southern Nakasendo.",
+    caution: "Local buses to Magome can fill on weekends — check timetables the night before.",
+  },
+  "nezame hotel": {
+    text: "A valley stay used as the walking base for mid-Nakasendo days, with breakfast and dinner included on package nights.",
+    caution: "Rural evenings are quiet; confirm dinner time with the front desk.",
+  },
+  "yamaniwa inn": {
+    text: "A smaller inn on the northern Kiso stretch — a calm stop near Narai-juku.",
+    caution: "Space can be limited; keep valuables zipped in shared areas.",
+  },
+  "traveler's inn takagi": {
+    text: "A family-run inn near Matsumoto Castle above a soba restaurant — atmospheric Japanese-style rooms.",
+    caution: "Shared bath/toilet facilities; limited English — keep booking details handy.",
+  },
+  "shinjuku washington hotel": {
+    text: "A classic Shinjuku hotel convenient for shopping, ramen alleys, and the final Tokyo nights.",
+    caution:
+      "Shinjuku Station exits are confusing with luggage — follow hotel directions carefully.",
+  },
 }
 
 export const DEMO_TRIP_ID = "demo_nakasendo"
@@ -605,6 +749,7 @@ export type SeedResult = {
 /** Merge known Nakasendo place coords into tc_plan_geo (safe to call anytime). */
 export function seedNakasendoGeocodeCache() {
   mergeGeocodeCache(DEMO_GEO)
+  mergePlaceNotes(DEMO_PLACE_NOTES)
 }
 
 /** Write demo flats + trip registry. Call applyTripFlats() in App after. */

@@ -21,6 +21,7 @@ export function PlanTab({
 }) {
   const [newActs, setNewActs] = useState({})
   const [showCal, setShowCal] = useState(false)
+  const [focusActivityId, setFocusActivityId] = useState(null)
   const tripDays =
     trip.startDate && trip.endDate
       ? Math.max(
@@ -259,6 +260,8 @@ export function PlanTab({
         itinerary={itinerary}
         memories={memories}
         tripKey={activeTripId || trip.destination || "trip"}
+        focusActivityId={focusActivityId}
+        onFocusConsumed={() => setFocusActivityId(null)}
       />
 
       <div className="card">
@@ -316,6 +319,7 @@ export function PlanTab({
                     onDelete={() => removeActivity(day.id, act.id)}
                     onExpense={() => onQuickExpense(act, day)}
                     onMemory={() => onQuickMemory(act, day)}
+                    onLocate={() => setFocusActivityId(act.id)}
                     isFirst={i === 0}
                   />
                 ))}

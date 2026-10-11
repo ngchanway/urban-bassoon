@@ -7,6 +7,7 @@ export function SwipeableActivity({
   onDelete,
   onExpense,
   onMemory,
+  onLocate,
   isFirst,
 }) {
   const THRESHOLD = 72 // px to trigger action
@@ -15,7 +16,7 @@ export function SwipeableActivity({
 
   const [dx, setDx] = useState(0)
   const [phase, setPhase] = useState("idle") // idle | drag | snap | done-flash | delete-flash | collapsing
-  const touch = useRef({ x0: 0, y0: 0, decided: false, horiz: false })
+  const touch = useRef({ x0: 0, y0: 0, decided: false, horiz: false, swiped: false })
   const wrapRef = useRef(null)
 
   const clamp = (v) => Math.max(-MAX_DRAG, Math.min(MAX_DRAG, v))
@@ -25,7 +26,7 @@ export function SwipeableActivity({
   // ── Touch handlers ──────────────────────────────────────────────────────
   const onStart = (e) => {
     const t = e.touches[0]
-    touch.current = { x0: t.clientX, y0: t.clientY, decided: false, horiz: false }
+    touch.current = { x0: t.clientX, y0: t.clientY, decided: false, horiz: false, swiped: false }
     setPhase("drag")
   }
 
@@ -44,6 +45,7 @@ export function SwipeableActivity({
       return
     }
     e.preventDefault()
+    if (Math.abs(diffX) > MIN_INTENT) touch.current.swiped = true
     setDx(clamp(diffX))
   }
 
@@ -83,11 +85,14 @@ export function SwipeableActivity({
   const mouse = useRef({ down: false, x0: 0 })
   const onMouseDown = (e) => {
     mouse.current = { down: true, x0: e.clientX }
+    touch.current.swiped = false
     setPhase("drag")
   }
   const onMouseMove = (e) => {
     if (!mouse.current.down) return
-    setDx(clamp(e.clientX - mouse.current.x0))
+    const diffX = e.clientX - mouse.current.x0
+    if (Math.abs(diffX) > MIN_INTENT) touch.current.swiped = true
+    setDx(clamp(diffX))
   }
   const onMouseUp = () => {
     if (!mouse.current.down) return
@@ -158,8 +163,18 @@ export function SwipeableActivity({
           {isDone && "✓"}
         </div>
 
-        {/* Text */}
-        <span className={`swipe-act-text${isDone ? " done" : ""}`} onClick={onToggle}>
+        {/* Text — tap flies map to pin; long-press/swipe unchanged */}
+        <span
+          className={`swipe-act-text${isDone ? " done" : ""}`}
+          role={onLocate ? "button" : undefined}
+          title={onLocate ? "Show on map" : undefined}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (touch.current.swiped || Math.abs(dx) > MIN_INTENT) return
+            if (onLocate) onLocate()
+            else onToggle()
+          }}
+        >
           {act.text}
         </span>
 
