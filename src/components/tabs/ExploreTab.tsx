@@ -1364,9 +1364,7 @@ Provide the current visa and entry requirements.`,
           </button>
         </div>
         {currResult !== null && (
-          <div
-            style={{ textAlign: "center", marginTop: 14, fontFamily: "'Playfair Display',serif" }}
-          >
+          <div style={{ textAlign: "center", marginTop: 14, fontFamily: "'DM Sans',sans-serif" }}>
             <span style={{ fontSize: 13, color: "rgba(230,217,194,0.45)" }}>
               {currAmount} {currFrom} =
             </span>

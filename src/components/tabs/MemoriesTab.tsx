@@ -1,7 +1,7 @@
 import L from "leaflet"
 import { useEffect, useRef, useState } from "react"
 import { callAi } from "../../lib/ai"
-import { cartoDarkRasterUrlTemplate } from "../../lib/maps/cartoBasemap"
+import { cartoRasterUrlTemplate } from "../../lib/maps/cartoBasemap"
 export function MemoriesTab({
   memories,
   addMemory,
@@ -243,8 +243,8 @@ Write the travel story.`,
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return
     /* L from leaflet */
-    const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
-    L.tileLayer(cartoDarkRasterUrlTemplate(), {
+    const map = L.map(mapRef.current, { zoomControl: false, attributionControl: false })
+    L.tileLayer(cartoRasterUrlTemplate(), {
       maxZoom: 19,
       subdomains: "abcd",
     }).addTo(map)
@@ -405,7 +405,7 @@ Write the travel story.`,
   return (
     <div>
       {/* Map */}
-      <div className="card" style={{ padding: 0, overflow: "hidden", borderRadius: 18 }}>
+      <div className="app-map-sticky">
         <div id="travel-map" ref={mapRef} />
       </div>
       <div className="map-hint">📍 Tap anywhere on the map to drop a memory pin</div>

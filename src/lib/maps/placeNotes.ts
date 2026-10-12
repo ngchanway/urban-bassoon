@@ -1,7 +1,7 @@
 import { callAi } from "../ai"
 import { LS } from "../storage"
 
-export type PlaceNote = { text: string; at: string; caution?: string }
+export type PlaceNote = { text: string; at: string; caution?: string; moreUrl?: string }
 
 const NOTES_KEY = "tc_place_notes"
 
@@ -13,13 +13,20 @@ export function loadPlaceNotes(): Record<string, PlaceNote> {
   return LS.get<Record<string, PlaceNote>>(NOTES_KEY, {})
 }
 
-export function mergePlaceNotes(entries: Record<string, Omit<PlaceNote, "at"> & { at?: string }>) {
+export function mergePlaceNotes(
+  entries: Record<string, Omit<PlaceNote, "at"> & { at?: string; moreUrl?: string }>,
+) {
   const next = loadPlaceNotes()
   const now = new Date().toISOString()
   for (const [k, v] of Object.entries(entries)) {
     const key = normKey(k)
     if (!key || !v.text?.trim()) continue
-    next[key] = { text: v.text.trim(), caution: v.caution?.trim(), at: v.at || now }
+    next[key] = {
+      text: v.text.trim(),
+      caution: v.caution?.trim(),
+      moreUrl: v.moreUrl?.trim() || undefined,
+      at: v.at || now,
+    }
   }
   LS.set(NOTES_KEY, next)
 }
@@ -28,33 +35,63 @@ export function getPlaceNote(noteKey: string): PlaceNote | null {
   return loadPlaceNotes()[normKey(noteKey)] || null
 }
 
-export function formatStopPopup(opts: {
-  title: string
-  dayLabel?: string
-  activitySnippet?: string
-  kind?: string
-  note?: PlaceNote | null
-}): string {
-  const meta = [opts.dayLabel, opts.activitySnippet || (opts.kind === "hub" ? "Departure" : "")]
-    .filter(Boolean)
-    .join(" · ")
-  const noteHtml = opts.note?.text
-    ? `<div class="popup-notes">${escapeHtml(opts.note.text)}</div>`
-    : ""
-  const cautionHtml = opts.note?.caution
-    ? `<div class="popup-notes" style="margin-top:6px;color:#e8c9a8"><strong>Watch out:</strong> ${escapeHtml(opts.note.caution)}</div>`
-    : ""
-  return `<div class="popup-title">${escapeHtml(opts.title)}</div>${
-    meta ? `<div class="popup-meta">${escapeHtml(meta)}</div>` : ""
-  }${noteHtml}${cautionHtml}`
-}
-
-function escapeHtml(s: string) {
-  return s
+function escapeHtml(s: string | number | null | undefined) {
+  return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
+}
+
+/** Minimal list glyph for popup HTML (no React). */
+const ITIN_ICON_SVG =
+  '<svg class="popup-itin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>'
+
+export function formatStopPopup(opts: {
+  title: string
+  localLabel?: string
+  dayLabel?: string
+  activitySnippet?: string
+  kind?: string
+  note?: PlaceNote | null
+  dayId?: string | number
+  activityId?: string | number
+  stopId?: string | number
+  expanded?: boolean
+  /** @deprecated Full note always shown; kept for call-site compat. */
+  compact?: boolean
+}): string {
+  const meta = [opts.dayLabel, opts.activitySnippet || (opts.kind === "hub" ? "Departure" : "")]
+    .filter(Boolean)
+    .join(" · ")
+
+  let noteHtml = ""
+  const note = opts.note
+  if (note?.text) {
+    let moreCtrl = ""
+    if (note.moreUrl) {
+      moreCtrl = ` <a class="popup-read-more" href="${escapeHtml(note.moreUrl)}" target="_blank" rel="noopener noreferrer">Read more</a>`
+    }
+    noteHtml = `<div class="popup-notes">${escapeHtml(note.text)}${moreCtrl}</div>`
+  }
+
+  const cautionHtml = note?.caution
+    ? `<div class="popup-notes popup-caution"><strong>Watch out:</strong> ${escapeHtml(note.caution)}</div>`
+    : ""
+
+  let itinHtml = ""
+  if (opts.dayId || opts.activityId) {
+    const dayAttr = opts.dayId ? ` data-day-id="${escapeHtml(opts.dayId)}"` : ""
+    const actAttr = opts.activityId ? ` data-activity-id="${escapeHtml(opts.activityId)}"` : ""
+    itinHtml = `<button type="button" class="popup-itin-link"${dayAttr}${actAttr} aria-label="Show in itinerary" title="Show in itinerary">${ITIN_ICON_SVG}</button>`
+  }
+
+  const local = opts.localLabel?.trim()
+  const localHtml = local ? `<div class="popup-local">${escapeHtml(local)}</div>` : ""
+
+  return `<div class="popup-title-row"><div class="popup-title-stack"><div class="popup-title">${escapeHtml(opts.title)}</div>${localHtml}</div>${itinHtml}</div>${
+    meta ? `<div class="popup-meta">${escapeHtml(meta)}</div>` : ""
+  }${noteHtml}${cautionHtml}`
 }
 
 /** Lazy AI note for custom places; caches in tc_place_notes. */

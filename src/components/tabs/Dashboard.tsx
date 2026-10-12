@@ -18,10 +18,12 @@ export function Dashboard({
   onQuickExpense,
   onQuickMemory,
   saveTrip,
+  people = [],
+  savePeople,
   hasInvite,
   demoMode = false,
   guideContact = null,
-  routeBanner = "",
+  routeBanner: _routeBanner = "",
 }) {
   const today = new Date()
 
@@ -78,6 +80,42 @@ export function Dashboard({
   })
   const [showModal, setShowModal] = useState(false)
   const [exchangeRate, setExchangeRate] = useState(null)
+  const [tripEditOpen, setTripEditOpen] = useState(
+    () => !(trip.destination && trip.startDate && trip.endDate),
+  )
+  const [newPerson, setNewPerson] = useState("")
+
+  const Avatar = ({ name, size = 26 }) => (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: "var(--amber-glow)",
+        border: "1px solid var(--amber-dim)",
+        color: "var(--amber)",
+        fontSize: size * 0.38,
+        fontWeight: 700,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      {(name || "?").slice(0, 2).toUpperCase()}
+    </div>
+  )
+
+  const handleAddPerson = () => {
+    const name = newPerson.trim()
+    if (!name || !savePeople) return
+    if (people.find((p) => p.name === name)) return
+    savePeople([...people, { id: Date.now(), name }])
+    setNewPerson("")
+  }
+
+  const daysCardVal = tripOver ? "✈️" : isOnTrip ? "🌍" : daysUntil
+  const daysCardLabel = tripOver ? "Trip completed" : isOnTrip ? "On your trip" : "Days until"
 
   // ── Auto-fetch weather ────────────────────────────────────────────────────
   useEffect(() => {
@@ -609,7 +647,7 @@ Generate the departure day brief.`,
             <div style={{ fontSize: 28, marginBottom: 8 }}>✈️</div>
             <div
               style={{
-                fontFamily: "'Playfair Display',serif",
+                fontFamily: "'DM Sans',sans-serif",
                 fontSize: 16,
                 color: "var(--amber)",
                 marginBottom: 4,
@@ -721,45 +759,123 @@ Generate the departure day brief.`,
         </div>
       )}
 
-      {/* ── Countdown / Status Banner ── */}
+      {/* ── Trip details (editable) ── */}
       {trip.destination && (
-        <div className="countdown-banner">
-          <div>
-            {tripOver ? (
-              <div className="countdown-num">✈️</div>
-            ) : isOnTrip ? (
-              <div className="countdown-num" style={{ fontSize: 28 }}>
-                🌍
+        <div className="home-trip-strip">
+          {tripEditOpen ? (
+            <div className="home-trip-edit">
+              <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                <div className="card-title" style={{ marginBottom: 0, fontSize: 14 }}>
+                  Trip details
+                </div>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ fontSize: 11, padding: "4px 10px" }}
+                  onClick={() => setTripEditOpen(false)}
+                >
+                  Done
+                </button>
               </div>
-            ) : (
-              <div className="countdown-num">{daysUntil}</div>
-            )}
-          </div>
-          <div className="countdown-info">
-            <div className="countdown-label">
-              {tripOver
-                ? "Trip completed"
-                : isOnTrip
-                  ? "You're on your trip!"
-                  : "days until departure"}
+              <input
+                className="input"
+                placeholder="Destination"
+                value={trip.destination}
+                onChange={(e) => saveTrip({ ...trip, destination: e.target.value })}
+              />
+              <div className="grid-2" style={{ marginTop: 8 }}>
+                <div>
+                  <div className="card-title-small">Depart</div>
+                  <input
+                    type="date"
+                    className="input"
+                    value={trip.startDate}
+                    onChange={(e) => saveTrip({ ...trip, startDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <div className="card-title-small">Return</div>
+                  <input
+                    type="date"
+                    className="input"
+                    value={trip.endDate}
+                    onChange={(e) => saveTrip({ ...trip, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="countdown-dest">📍 {trip.destination}</div>
-            {trip.startDate && (
-              <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 3 }}>
-                {trip.startDate}
-                {trip.endDate ? " → " + trip.endDate : ""}
+          ) : (
+            <button
+              type="button"
+              className="home-trip-strip-btn"
+              onClick={() => setTripEditOpen(true)}
+              title="Edit trip details"
+            >
+              <div className="home-trip-strip-main">
+                <div className="countdown-dest">📍 {trip.destination}</div>
+                {trip.startDate && (
+                  <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 3 }}>
+                    {trip.startDate}
+                    {trip.endDate ? ` → ${trip.endDate}` : ""}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {weatherData && !weatherData.error && (
-            <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontSize: 30, lineHeight: 1 }}>{weatherData.icon}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--amber)" }}>
-                {weatherData.temp}
-                {weatherData.unit}
-              </div>
-            </div>
+              {weatherData && !weatherData.error && (
+                <div style={{ textAlign: "center", flexShrink: 0 }}>
+                  <div style={{ fontSize: 26, lineHeight: 1 }}>{weatherData.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--amber)" }}>
+                    {weatherData.temp}
+                    {weatherData.unit}
+                  </div>
+                </div>
+              )}
+              <span className="home-trip-strip-edit">Edit</span>
+            </button>
           )}
+        </div>
+      )}
+
+      {/* Pre-trip block */}
+      {trip.destination && (
+        <div className="dash-grid">
+          <div className="dash-card" onClick={() => navigateTo(2)}>
+            <div className="dash-ring-wrap">
+              <Ring pct={packingPct} color="#4DB87A" />
+              <div className="dash-ring-center">
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#4DB87A" }}>{packingPct}%</div>
+              </div>
+            </div>
+            <div className="dash-card-label">Packed</div>
+            <div className="dash-card-sub">
+              {packingDone} of {packingTotal} items
+            </div>
+          </div>
+          <div className="dash-card" onClick={() => navigateTo(1)}>
+            <div
+              className="dash-card-val"
+              style={{ fontSize: typeof daysCardVal === "number" ? 28 : 26 }}
+            >
+              {daysCardVal}
+            </div>
+            <div className="dash-card-label">{daysCardLabel}</div>
+            {!tripOver && !isOnTrip && daysUntil != null && (
+              <div className="dash-card-sub">until departure</div>
+            )}
+          </div>
+          <div className="dash-card" onClick={() => navigateTo(3)}>
+            <div className="dash-ring-wrap">
+              <Ring pct={budgetPct} color={budgetPct > 85 ? "#FF5C5C" : "#FFA828"} />
+              <div className="dash-ring-center">
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--amber)" }}>
+                  {budgetPct}%
+                </div>
+              </div>
+            </div>
+            <div className="dash-card-label">Budget Used</div>
+            <div className="dash-card-sub">
+              {baseCurrency} {spent.toFixed(0)} of {totalBudget}
+            </div>
+          </div>
         </div>
       )}
 
@@ -780,11 +896,95 @@ Generate the departure day brief.`,
         </button>
       )}
 
-      {demoMode && routeBanner && trip.destination && (
-        <div className="japan-navi-route-strip">{routeBanner}</div>
+      {trip.destination && savePeople && (
+        <div className="card">
+          <div className="card-title">👥 Travellers</div>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 10,
+              marginBottom: 10,
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Avatar name="Me" size={28} />
+              <span style={{ fontSize: 12 }}>Me</span>
+            </div>
+            {people.map((p) => (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Avatar name={p.name} size={28} />
+                <span style={{ fontSize: 12 }}>{p.name}</span>
+                <button
+                  type="button"
+                  className="btn-del"
+                  style={{ fontSize: 12 }}
+                  onClick={() => savePeople(people.filter((x) => x.id !== p.id))}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-8">
+            <input
+              className="input flex-1"
+              style={{ fontSize: 12, padding: "7px 11px" }}
+              placeholder="Add traveller…"
+              value={newPerson}
+              onChange={(e) => setNewPerson(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddPerson()}
+            />
+            <button type="button" className="btn-ghost" onClick={handleAddPerson}>
+              Add
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* ── Today's Activities ── */}
+      {expenses.length > 0 && (
+        <div className="card">
+          <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+            <div className="card-title" style={{ marginBottom: 0, fontSize: 14 }}>
+              💳 Recent Expenses
+            </div>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ fontSize: 11, padding: "3px 9px" }}
+              onClick={() => navigateTo(3)}
+            >
+              See all
+            </button>
+          </div>
+          {[...expenses]
+            .reverse()
+            .slice(0, 4)
+            .map((exp) => (
+              <div key={exp.id} className="exp-row" style={{ padding: "8px 0" }}>
+                <div className="exp-cat" style={{ fontSize: 18 }}>
+                  {exp.cat.split(" ")[0]}
+                </div>
+                <div className="exp-info">
+                  <div className="exp-desc" style={{ fontSize: 12 }}>
+                    {exp.desc}
+                  </div>
+                  {exp.activityText && (
+                    <div className="linked-badge">📅 {exp.activityText.slice(0, 20)}</div>
+                  )}
+                </div>
+                <div className="exp-amt" style={{ fontSize: 12 }}>
+                  {baseCurrency} {Number(exp.amtBase ?? exp.amount).toFixed(2)}
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {/* During-trip block */}
+      {isOnTrip && <div className="home-on-trip-status">You&apos;re on your trip</div>}
+
       {todayDay && (
         <div className="today-card">
           <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
@@ -792,6 +992,7 @@ Generate the departure day brief.`,
               📅 {todayDay.label} — Today
             </div>
             <button
+              type="button"
               className="btn-ghost"
               style={{ fontSize: 11, padding: "3px 9px" }}
               onClick={() => navigateTo(1)}
@@ -814,8 +1015,7 @@ Generate the departure day brief.`,
                   onDelete={() => removeActivity(todayDay.id, act.id)}
                   onExpense={() => onQuickExpense(act, todayDay)}
                   onMemory={() => onQuickMemory(act, todayDay)}
-                  isFirst={i === 0}
-                />
+                  isFirst={i === 0} onLocate={undefined} flash={undefined}                />
               ))}
               <div className="swipe-hint">← swipe to delete · swipe to complete →</div>
             </div>
@@ -823,35 +1023,8 @@ Generate the departure day brief.`,
         </div>
       )}
 
-      {/* ── Stats Grid ── */}
       {trip.destination && (
         <div className="dash-grid">
-          <div className="dash-card" onClick={() => navigateTo(3)}>
-            <div className="dash-ring-wrap">
-              <Ring pct={budgetPct} color={budgetPct > 85 ? "#FF5C5C" : "#FFA828"} />
-              <div className="dash-ring-center">
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--amber)" }}>
-                  {budgetPct}%
-                </div>
-              </div>
-            </div>
-            <div className="dash-card-label">Budget Used</div>
-            <div className="dash-card-sub">
-              {baseCurrency} {spent.toFixed(0)} of {totalBudget}
-            </div>
-          </div>
-          <div className="dash-card" onClick={() => navigateTo(2)}>
-            <div className="dash-ring-wrap">
-              <Ring pct={packingPct} color="#4DB87A" />
-              <div className="dash-ring-center">
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#4DB87A" }}>{packingPct}%</div>
-              </div>
-            </div>
-            <div className="dash-card-label">Packed</div>
-            <div className="dash-card-sub">
-              {packingDone} of {packingTotal} items
-            </div>
-          </div>
           <div className="dash-card" onClick={() => navigateTo(1)}>
             <div className="dash-card-icon">📅</div>
             <div className="dash-card-val">
@@ -859,6 +1032,12 @@ Generate the departure day brief.`,
             </div>
             <div className="dash-card-label">Activities Done</div>
           </div>
+        </div>
+      )}
+
+      {/* Post-trip block */}
+      {trip.destination && (
+        <div className="dash-grid">
           <div className="dash-card" onClick={() => navigateTo(5)}>
             <div className="dash-card-icon">📸</div>
             <div className="dash-card-val">{memories.length}</div>
@@ -870,7 +1049,6 @@ Generate the departure day brief.`,
         </div>
       )}
 
-      {/* ── Recent Memories Strip ── */}
       {memories.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
@@ -878,6 +1056,7 @@ Generate the departure day brief.`,
               📸 Recent Memories
             </div>
             <button
+              type="button"
               className="btn-ghost"
               style={{ fontSize: 11, padding: "3px 9px" }}
               onClick={() => navigateTo(5)}
@@ -909,45 +1088,6 @@ Generate the departure day brief.`,
                 </div>
               ))}
           </div>
-        </div>
-      )}
-
-      {/* ── Recent Expenses ── */}
-      {expenses.length > 0 && (
-        <div className="card">
-          <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
-            <div className="card-title" style={{ marginBottom: 0, fontSize: 14 }}>
-              💳 Recent Expenses
-            </div>
-            <button
-              className="btn-ghost"
-              style={{ fontSize: 11, padding: "3px 9px" }}
-              onClick={() => navigateTo(3)}
-            >
-              See all
-            </button>
-          </div>
-          {[...expenses]
-            .reverse()
-            .slice(0, 4)
-            .map((exp) => (
-              <div key={exp.id} className="exp-row" style={{ padding: "8px 0" }}>
-                <div className="exp-cat" style={{ fontSize: 18 }}>
-                  {exp.cat.split(" ")[0]}
-                </div>
-                <div className="exp-info">
-                  <div className="exp-desc" style={{ fontSize: 12 }}>
-                    {exp.desc}
-                  </div>
-                  {exp.activityText && (
-                    <div className="linked-badge">📅 {exp.activityText.slice(0, 20)}</div>
-                  )}
-                </div>
-                <div className="exp-amt" style={{ fontSize: 12 }}>
-                  {baseCurrency} {Number(exp.amtBase ?? exp.amount).toFixed(2)}
-                </div>
-              </div>
-            ))}
         </div>
       )}
     </div>

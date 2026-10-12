@@ -13,7 +13,7 @@ export function BudgetTab({
   expenses,
   saveExpenses,
   people,
-  savePeople,
+  savePeople: _savePeople,
   docs,
   saveDocs,
   dailyBudget,
@@ -27,7 +27,6 @@ export function BudgetTab({
 }) {
   const [editingBudget, setEditingBudget] = useState(false)
   const [budgetInput, setBudgetInput] = useState(String(totalBudget))
-  const [newPerson, setNewPerson] = useState("")
   const [ratesCache, setRatesCache] = useState({})
   const [activeTab, setActiveTab] = useState("add")
 
@@ -214,12 +213,6 @@ export function BudgetTab({
   }
   const settlements = simplifyDebts()
 
-  const handleAddPerson = () => {
-    const name = newPerson.trim()
-    if (!name || people.find((p) => p.name === name)) return
-    savePeople([...people, { id: Date.now(), name }])
-    setNewPerson("")
-  }
   const toggleSplitWith = (name) =>
     setForm((f) => ({
       ...f,
@@ -513,57 +506,12 @@ If you can't read a field clearly, make your best inference and lower confidence
         </div>
       </div>
 
-      {/* Travellers */}
-      <div className="card">
-        <div className="card-title">👥 Travellers</div>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 10,
-            marginBottom: 10,
-            alignItems: "center",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Avatar name="Me" size={28} />
-            <span style={{ fontSize: 12 }}>Me</span>
-          </div>
-          {people.map((p) => (
-            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Avatar name={p.name} size={28} />
-              <span style={{ fontSize: 12 }}>{p.name}</span>
-              <button
-                className="btn-del"
-                style={{ fontSize: 12 }}
-                onClick={() => savePeople(people.filter((x) => x.id !== p.id))}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-8">
-          <input
-            className="input flex-1"
-            style={{ fontSize: 12, padding: "7px 11px" }}
-            placeholder="Add traveller…"
-            value={newPerson}
-            onChange={(e) => setNewPerson(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddPerson()}
-          />
-          <button className="btn-ghost" onClick={handleAddPerson}>
-            Add
-          </button>
-        </div>
-      </div>
-
       {/* Sub-tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
         {[
           ["add", "➕ Add"],
           ["transactions", "🧾 Log"],
-          ["balances", "⚖️ Balances"],
+          ["balances", "📊 Summary"],
           ["daily", "📅 Daily"],
         ].map(([id, label]) => (
           <button

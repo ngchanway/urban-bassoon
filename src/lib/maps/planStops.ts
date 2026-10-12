@@ -7,6 +7,8 @@ export type PlanStop = {
   id: string
   kind: PlanStopKind
   label: string
+  /** Local-script name for asking locals (e.g. 新宿). */
+  localLabel?: string
   lat: number
   lng: number
   dayId?: string
@@ -334,6 +336,7 @@ function toStop(pq: PlaceQuery, hit: GeoHit): PlanStop {
     id: pq.id,
     kind: pq.kind,
     label: pq.query,
+    localLabel: hit.local?.trim() || undefined,
     lat: hit.lat,
     lng: hit.lng,
     dayId: pq.dayId,

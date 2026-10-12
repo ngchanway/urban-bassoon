@@ -1,23 +1,55 @@
+export const escICS = (s) =>
+  String(s || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "")
+
+export const icsDate = (d) => d.toISOString().split("T")[0].replace(/-/g, "")
+
 export const addDays = (dateStr, n) => {
   const d = new Date(dateStr + "T12:00:00")
   d.setDate(d.getDate() + n)
   return d
 }
 
+const calendarHeader = (trip) => [
+  "BEGIN:VCALENDAR",
+  "VERSION:2.0",
+  "PRODID:-//TravelPal//TravelPal v1//EN",
+  "CALSCALE:GREGORIAN",
+  "METHOD:PUBLISH",
+  `X-WR-CALNAME:${escICS(trip.name || "My Trip")}`,
+  `X-WR-CALDESC:${escICS(trip.destination || "")}`,
+  "X-WR-TIMEZONE:UTC",
+]
+
+const dayActivityEvents = (trip, day, idx) => {
+  const lines = []
+  if (!trip.startDate) return lines
+  const dayDate = addDays(trip.startDate, idx)
+  const nextDay = addDays(trip.startDate, idx + 1)
+  ;(day.activities || []).forEach((act, ai) => {
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:travelpal-${trip.startDate}-d${idx}-a${ai}@travelpal`,
+      `DTSTART;VALUE=DATE:${icsDate(dayDate)}`,
+      `DTEND;VALUE=DATE:${icsDate(nextDay)}`,
+      `SUMMARY:${escICS(act.text)}`,
+      `DESCRIPTION:${escICS(day.label + (trip.name ? " · " + trip.name : ""))}`,
+      `LOCATION:${escICS(trip.destination || "")}`,
+      `STATUS:${act.done ? "COMPLETED" : "CONFIRMED"}`,
+      "END:VEVENT",
+    )
+  })
+  return lines
+}
+
 // Build a complete ICS file for the whole trip
 export const generateICS = ({ trip, itinerary }) => {
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//TravelPal//TravelPal v1//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    `X-WR-CALNAME:${escICS(trip.name || "My Trip")}`,
-    `X-WR-CALDESC:${escICS(trip.destination || "")}`,
-    "X-WR-TIMEZONE:UTC",
-  ]
+  const lines = calendarHeader(trip)
 
-  // One all-day trip summary event
   if (trip.startDate) {
     const start = addDays(trip.startDate, 0)
     const end = trip.endDate ? addDays(trip.endDate, 1) : addDays(trip.startDate, 1)
@@ -33,27 +65,21 @@ export const generateICS = ({ trip, itinerary }) => {
     )
   }
 
-  // One all-day event per activity
   itinerary.forEach((day, idx) => {
-    if (!trip.startDate) return
-    const dayDate = addDays(trip.startDate, idx)
-    const nextDay = addDays(trip.startDate, idx + 1)
-    day.activities.forEach((act, ai) => {
-      lines.push(
-        "BEGIN:VEVENT",
-        `UID:travelpal-${trip.startDate}-d${idx}-a${ai}@travelpal`,
-        `DTSTART;VALUE=DATE:${icsDate(dayDate)}`,
-        `DTEND;VALUE=DATE:${icsDate(nextDay)}`,
-        `SUMMARY:${escICS(act.text)}`,
-        `DESCRIPTION:${escICS(day.label + (trip.name ? " · " + trip.name : ""))}`,
-        `LOCATION:${escICS(trip.destination || "")}`,
-        `STATUS:${act.done ? "COMPLETED" : "CONFIRMED"}`,
-        "END:VEVENT",
-      )
-    })
+    lines.push(...dayActivityEvents(trip, day, idx))
   })
 
   lines.push("END:VCALENDAR")
+  return lines.join("\r\n")
+}
+
+/** ICS for a single itinerary day (activities only). */
+export const generateDayICS = ({ trip, day, dayIndex }) => {
+  const lines = [
+    ...calendarHeader(trip),
+    ...dayActivityEvents(trip, day, dayIndex),
+    "END:VCALENDAR",
+  ]
   return lines.join("\r\n")
 }
 

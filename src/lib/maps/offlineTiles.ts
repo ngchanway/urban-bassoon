@@ -1,7 +1,7 @@
 import { LS } from "../storage"
-import { cartoDarkRasterTileUrl } from "./cartoBasemap"
+import { MAP_TILE_STYLE, cartoRasterTileUrl } from "./cartoBasemap"
 
-export { cartoDarkRasterUrlTemplate } from "./cartoBasemap"
+export { MAP_TILE_STYLE, cartoRasterUrlTemplate, cartoDarkRasterUrlTemplate } from "./cartoBasemap"
 
 export const MAP_TILE_CACHE = "tc-map-tiles"
 export const MAP_OFFLINE_KEY = "tc_map_offline"
@@ -17,6 +17,8 @@ export type OfflineMapMeta = {
   savedAt: string
   tileCount: number
   tripKey: string
+  /** Basemap style id; mismatch marks pack stale after style upgrades. */
+  style?: string
 }
 
 export function getOfflineMapMeta(): OfflineMapMeta | null {
@@ -29,6 +31,7 @@ export function setOfflineMapMeta(meta: OfflineMapMeta | null) {
 
 export function isOfflinePackStale(meta: OfflineMapMeta | null, now = Date.now()): boolean {
   if (!meta?.savedAt) return false
+  if (meta.style !== MAP_TILE_STYLE) return true
   const t = new Date(meta.savedAt).getTime()
   if (!Number.isFinite(t)) return false
   return now - t > OFFLINE_STALE_MS
@@ -44,7 +47,7 @@ function latToTileY(lat: number, z: number) {
 }
 
 function tileUrl(z: number, x: number, y: number) {
-  return cartoDarkRasterTileUrl(z, x, y)
+  return cartoRasterTileUrl(z, x, y)
 }
 
 export function padAroundPoint(lat: number, lng: number, padDeg: number): MapBounds {
@@ -236,6 +239,7 @@ export async function downloadTilePack(
     savedAt: new Date().toISOString(),
     tileCount: done,
     tripKey,
+    style: MAP_TILE_STYLE,
   }
   setOfflineMapMeta(meta)
   return meta

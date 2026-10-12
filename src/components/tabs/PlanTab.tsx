@@ -1,12 +1,21 @@
-import { useState } from "react"
-import { addDays, downloadICS, gcalDayUrl, generateICS, outlookDayUrl } from "../../lib/calendar"
+import { useEffect, useState } from "react"
+import {
+  addDays,
+  downloadICS,
+  gcalDayUrl,
+  generateDayICS,
+  generateICS,
+  outlookDayUrl,
+} from "../../lib/calendar"
 import { SwipeableActivity } from "../shared/SwipeableActivity"
 import { PlanRouteMap } from "./PlanRouteMap"
+
 export function PlanTab({
   trip,
   saveTrip,
   itinerary,
   addDay,
+  insertDay,
   addActivity,
   toggleActivity,
   removeDay,
@@ -19,9 +28,14 @@ export function PlanTab({
   onQuickMemory,
   activeTripId,
 }) {
+  const tripComplete = Boolean(trip.destination && trip.startDate && trip.endDate)
   const [newActs, setNewActs] = useState({})
   const [showCal, setShowCal] = useState(false)
   const [focusActivityId, setFocusActivityId] = useState(null)
+  const [locatableIds, setLocatableIds] = useState(() => new Set())
+  const [locateHint, setLocateHint] = useState("")
+  const [flashId, setFlashId] = useState(null)
+  const [expandedDayId, setExpandedDayId] = useState(() => itinerary[0]?.id ?? null)
   const tripDays =
     trip.startDate && trip.endDate
       ? Math.max(
@@ -32,6 +46,16 @@ export function PlanTab({
         )
       : null
 
+  useEffect(() => {
+    if (!itinerary.length) {
+      setExpandedDayId(null)
+      return
+    }
+    setExpandedDayId((cur) =>
+      cur != null && itinerary.some((d) => d.id === cur) ? cur : itinerary[0].id,
+    )
+  }, [itinerary])
+
   const handleAdd = (dayId) => {
     const t = (newActs[dayId] || "").trim()
     if (!t) return
@@ -39,222 +63,113 @@ export function PlanTab({
     setNewActs((p) => ({ ...p, [dayId]: "" }))
   }
 
-  // Per-day derived stats
   const daySpend = (day) =>
     expenses
       .filter((e) => e.dayId === day.id)
       .reduce((s, e) => s + (e.amtBase ?? Number(e.amount ?? 0)), 0)
   const dayMemories = (day) => memories.filter((m) => m.dayId === day.id).length
 
+  const flashEl = (elId) => {
+    setFlashId(elId)
+    window.setTimeout(() => setFlashId((cur) => (cur === elId ? null : cur)), 2000)
+  }
+
+  const toggleDay = (dayId) => {
+    setExpandedDayId((cur) => (cur === dayId ? null : dayId))
+  }
+
+  const handleLocate = (actId, dayId) => {
+    if (dayId != null) setExpandedDayId(dayId)
+    document
+      .getElementById("plan-route-map")
+      ?.closest(".app-map-sticky")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+    window.setTimeout(() => setFocusActivityId(actId), 160)
+  }
+
+  const handleRevealItinerary = ({ dayId, activityId }) => {
+    const actKey = activityId != null ? String(activityId) : ""
+    let dayKey = dayId != null ? String(dayId) : ""
+    if (!dayKey && actKey) {
+      const day = itinerary.find((d) => (d.activities || []).some((a) => String(a.id) === actKey))
+      if (day) dayKey = String(day.id)
+    }
+    if (dayKey) {
+      const match = itinerary.find((d) => String(d.id) === dayKey)
+      setExpandedDayId(match?.id ?? dayKey)
+    }
+
+    window.setTimeout(() => {
+      const actEl = actKey ? document.getElementById(`itin-act-${actKey}`) : null
+      const dayEl = dayKey ? document.getElementById(`itin-day-${dayKey}`) : null
+      const target = actEl || dayEl
+      if (!target) return
+      target.scrollIntoView({ behavior: "smooth", block: "center" })
+      flashEl(actEl ? `itin-act-${actKey}` : `itin-day-${dayKey}`)
+    }, 150)
+  }
+
+  const showTripForm = !tripComplete
+
+  const allActs = itinerary.flatMap((d) => d.activities).length
+  const daysWithActs = itinerary.filter((d) => d.activities.length > 0).length
+  const tripSlug = (trip.name || "trip").replace(/\s+/g, "-")
+  const icsStr = () => generateICS({ trip, itinerary })
+
+  const tripBlock = showTripForm ? (
+    <div className="plan-trip-details">
+      <div className="card-title" style={{ marginBottom: 8 }}>
+        🗺️ Trip Details
+      </div>
+      <div className="flex flex-col gap-8">
+        <input
+          className="input"
+          placeholder="Destination (e.g. Tokyo, Japan)"
+          value={trip.destination}
+          onChange={(e) => saveTrip({ ...trip, destination: e.target.value })}
+        />
+        <div className="grid-2">
+          <div>
+            <div className="card-title-small">Depart</div>
+            <input
+              type="date"
+              className="input"
+              value={trip.startDate}
+              onChange={(e) => saveTrip({ ...trip, startDate: e.target.value })}
+            />
+          </div>
+          <div>
+            <div className="card-title-small">Return</div>
+            <input
+              type="date"
+              className="input"
+              value={trip.endDate}
+              onChange={(e) => saveTrip({ ...trip, endDate: e.target.value })}
+            />
+          </div>
+        </div>
+        {tripDays != null && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "rgba(230,217,194,0.45)",
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <span>
+              🗓️ {tripDays} {tripDays === 1 ? "day" : "days"}
+            </span>
+            {trip.destination && <span>📍 {trip.destination}</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
     <div>
-      <div className="card">
-        <div className="card-title">🗺️ Trip Details</div>
-        <div className="flex flex-col gap-8">
-          <input
-            className="input"
-            placeholder="Destination (e.g. Tokyo, Japan)"
-            value={trip.destination}
-            onChange={(e) => saveTrip({ ...trip, destination: e.target.value })}
-          />
-          <div className="grid-2">
-            <div>
-              <div className="card-title-small">Depart</div>
-              <input
-                type="date"
-                className="input"
-                value={trip.startDate}
-                onChange={(e) => saveTrip({ ...trip, startDate: e.target.value })}
-              />
-            </div>
-            <div>
-              <div className="card-title-small">Return</div>
-              <input
-                type="date"
-                className="input"
-                value={trip.endDate}
-                onChange={(e) => saveTrip({ ...trip, endDate: e.target.value })}
-              />
-            </div>
-          </div>
-          {tripDays && (
-            <div
-              style={{
-                fontSize: 12,
-                color: "rgba(230,217,194,0.45)",
-                display: "flex",
-                gap: 12,
-                flexWrap: "wrap",
-              }}
-            >
-              <span>
-                🗓️ {tripDays} {tripDays === 1 ? "day" : "days"}
-              </span>
-              {trip.destination && <span>📍 {trip.destination}</span>}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Calendar Sync Card ── */}
-      {(() => {
-        const allActs = itinerary.flatMap((d) => d.activities).length
-        const daysWithActs = itinerary.filter((d) => d.activities.length > 0).length
-        const icsStr = () => generateICS({ trip, itinerary })
-        const isApple = /iPhone|iPad|Mac/.test(navigator.userAgent)
-        return (
-          <div className="cal-sync-card">
-            <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-              <div
-                className="card-title"
-                style={{ marginBottom: 0, fontSize: 14, color: "#5BA4FF" }}
-              >
-                📅 Add to Calendar
-              </div>
-              <button
-                className="btn-ghost"
-                style={{
-                  fontSize: 11,
-                  padding: "4px 10px",
-                  borderColor: "rgba(91,164,255,0.3)",
-                  color: "#5BA4FF",
-                }}
-                onClick={() => setShowCal((s) => !s)}
-              >
-                {showCal ? "Hide" : "Sync"}
-              </button>
-            </div>
-
-            {!trip.startDate && (
-              <div className="cal-no-dates">
-                Set trip dates in the fields above to enable calendar sync.
-              </div>
-            )}
-
-            {trip.startDate && (
-              <>
-                <div className="cal-stats-row">
-                  <div className="cal-stat">{allActs} events</div>
-                  <div className="cal-stat">{daysWithActs} days</div>
-                  {trip.startDate && <div className="cal-stat">from {trip.startDate}</div>}
-                </div>
-
-                {showCal && (
-                  <>
-                    {/* Platform buttons */}
-                    <div className="cal-platform-grid">
-                      {/* Apple Calendar / ICS */}
-                      <div
-                        className="cal-platform-btn"
-                        onClick={() =>
-                          downloadICS(icsStr(), `${(trip.name || "trip").replace(/\s+/g, "-")}.ics`)
-                        }
-                      >
-                        <div className="cal-platform-icon">🍎</div>
-                        <div>
-                          <div className="cal-platform-label">
-                            {isApple ? "Apple Calendar" : "Download .ics"}
-                          </div>
-                          <div className="cal-platform-sub">
-                            {isApple ? "Opens in Calendar.app" : "All calendars, any device"}
-                          </div>
-                        </div>
-                      </div>
-                      {/* Universal ICS */}
-                      <div
-                        className="cal-platform-btn"
-                        onClick={() =>
-                          downloadICS(icsStr(), `${(trip.name || "trip").replace(/\s+/g, "-")}.ics`)
-                        }
-                      >
-                        <div className="cal-platform-icon">📥</div>
-                        <div>
-                          <div className="cal-platform-label">Download .ics</div>
-                          <div className="cal-platform-sub">
-                            Universal — Google, Outlook, any app
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Per-day calendar links preview */}
-                    {itinerary.filter((d) => d.activities.length > 0).length > 0 && (
-                      <div className="cal-event-preview">
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--text-dim)",
-                            textTransform: "uppercase",
-                            letterSpacing: ".6px",
-                            fontWeight: 700,
-                            marginBottom: 6,
-                          }}
-                        >
-                          Add individual days
-                        </div>
-                        {itinerary.map((day, idx) => {
-                          if (!day.activities.length) return null
-                          const gc = gcalDayUrl(day, idx, trip)
-                          const ol = outlookDayUrl(day, idx, trip)
-                          const d = addDays(trip.startDate, idx)
-                          const dateLabel = d.toLocaleDateString("en", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })
-                          return (
-                            <div key={day.id} className="cal-preview-row">
-                              <div className="cal-preview-date">{dateLabel}</div>
-                              <div className="cal-preview-acts">
-                                {day.label} · {day.activities.length} act
-                                {day.activities.length !== 1 ? "s" : ""}
-                              </div>
-                              {gc && (
-                                <a
-                                  href={gc}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="cal-preview-gcal"
-                                >
-                                  G
-                                </a>
-                              )}
-                              {ol && (
-                                <a
-                                  href={ol}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{
-                                    background: "rgba(0,120,212,0.1)",
-                                    border: "1px solid rgba(0,120,212,0.2)",
-                                    borderRadius: 6,
-                                    padding: "2px 7px",
-                                    fontSize: 10,
-                                    color: "#0078D4",
-                                    textDecoration: "none",
-                                    marginLeft: 4,
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  ⊞
-                                </a>
-                              )}
-                            </div>
-                          )
-                        })}
-                        <div style={{ fontSize: 10, color: "rgba(230,217,194,0.3)", marginTop: 8 }}>
-                          G = Google Calendar · ⊞ = Outlook
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        )
-      })()}
-
       <PlanRouteMap
         trip={trip}
         itinerary={itinerary}
@@ -262,92 +177,264 @@ export function PlanTab({
         tripKey={activeTripId || trip.destination || "trip"}
         focusActivityId={focusActivityId}
         onFocusConsumed={() => setFocusActivityId(null)}
+        onLocateMiss={() => {
+          setLocateHint("Pin not located yet")
+          window.setTimeout(() => setLocateHint(""), 2200)
+        }}
+        onRevealItinerary={handleRevealItinerary}
+        onLocatableIds={(ids) => setLocatableIds(new Set(ids.map(String)))}
       />
 
+      {locateHint && <div className="plan-locate-hint">{locateHint}</div>}
+
       <div className="card">
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <div className="card-title" style={{ marginBottom: 0 }}>
-            📅 Itinerary
-          </div>
-          <button className="btn btn-sm" onClick={addDay}>
-            + Day
-          </button>
+        {tripBlock}
+
+        <div className="card-title" style={{ marginBottom: 10 }}>
+          📅 Itinerary
         </div>
+
+        <button
+          type="button"
+          className="plan-export-toggle"
+          aria-expanded={showCal}
+          onClick={() => setShowCal((s) => !s)}
+        >
+          <span className="plan-export-toggle-label">
+            <span className="plan-export-chevron" aria-hidden="true">
+              {showCal ? "▾" : "▸"}
+            </span>
+            Export to calendar
+          </span>
+          {allActs > 0 && <span className="plan-export-toggle-meta">{allActs} events</span>}
+        </button>
+
+        {showCal && (
+          <div className="plan-itin-sync">
+            {!trip.startDate && (
+              <div className="cal-no-dates">Set trip dates above to enable calendar export.</div>
+            )}
+            {trip.startDate && (
+              <>
+                <button
+                  type="button"
+                  className="btn plan-export-ics-btn"
+                  onClick={() => downloadICS(icsStr(), `${tripSlug}.ics`)}
+                >
+                  Download .ics
+                </button>
+                <div className="plan-export-ics-sub">
+                  Works with Apple Calendar, Google, Outlook
+                </div>
+
+                {daysWithActs > 0 && (
+                  <div className="cal-event-preview">
+                    <div className="cal-event-preview-title">Add one day</div>
+                    {itinerary.map((day, idx) => {
+                      if (!day.activities.length) return null
+                      const gc = gcalDayUrl(day, idx, trip)
+                      const ol = outlookDayUrl(day, idx, trip)
+                      const d = addDays(trip.startDate, idx)
+                      const dateLabel = d.toLocaleDateString("en", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })
+                      return (
+                        <div key={day.id} className="cal-preview-row">
+                          <div className="cal-preview-date">{dateLabel}</div>
+                          <div className="cal-preview-acts">
+                            {day.label} · {day.activities.length} act
+                            {day.activities.length !== 1 ? "s" : ""}
+                          </div>
+                          <div className="cal-preview-chips">
+                            {gc && (
+                              <a
+                                href={gc}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="cal-chip cal-chip-google"
+                              >
+                                Google
+                              </a>
+                            )}
+                            {ol && (
+                              <a
+                                href={ol}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="cal-chip cal-chip-outlook"
+                              >
+                                Outlook
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              className="cal-chip cal-chip-ics"
+                              onClick={() =>
+                                downloadICS(
+                                  generateDayICS({ trip, day, dayIndex: idx }),
+                                  `${tripSlug}-day-${idx + 1}.ics`,
+                                )
+                              }
+                            >
+                              .ics
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {itinerary.length === 0 ? (
           <div className="empty">
             <div className="empty-icon">🗓️</div>
             <div className="empty-msg">Add days to build your itinerary</div>
           </div>
         ) : (
-          itinerary.map((day) => {
+          itinerary.map((day, dayIdx) => {
             const ds = daySpend(day)
             const dm = dayMemories(day)
+            const expanded = String(expandedDayId) === String(day.id)
+            const firstAct = (day.activities[0]?.text || "").trim()
+            const oneLiner =
+              day.activities.length === 0
+                ? "No activities yet"
+                : firstAct
+                  ? `${firstAct.length > 48 ? `${firstAct.slice(0, 48).trimEnd()}…` : firstAct}${day.activities.length > 1 ? ` · +${day.activities.length - 1}` : ""}`
+                  : `${day.activities.length} activit${day.activities.length === 1 ? "y" : "ies"}`
             return (
-              <div key={day.id} className="day-card">
-                <div className="day-hdr">
-                  <div className="day-title">{day.label}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {ds > 0 && (
-                      <span className="linked-badge" onClick={() => navigateTo(3)}>
-                        💰 {baseCurrency} {ds.toFixed(0)}
-                      </span>
-                    )}
-                    {dm > 0 && (
-                      <span
-                        className="linked-badge"
-                        style={{
-                          background: "rgba(255,168,40,0.08)",
-                          borderColor: "rgba(255,168,40,0.2)",
-                          color: "var(--amber)",
-                        }}
-                        onClick={() => navigateTo(5)}
-                      >
-                        📸 {dm}
-                      </span>
-                    )}
-                    <button className="btn-del" onClick={() => removeDay(day.id)}>
-                      ✕
-                    </button>
-                  </div>
-                </div>
-                {day.activities.map((act, i) => (
-                  <SwipeableActivity
-                    key={act.id}
-                    act={act}
-                    dayId={day.id}
-                    onToggle={() => toggleActivity(day.id, act.id)}
-                    onDelete={() => removeActivity(day.id, act.id)}
-                    onExpense={() => onQuickExpense(act, day)}
-                    onMemory={() => onQuickMemory(act, day)}
-                    onLocate={() => setFocusActivityId(act.id)}
-                    isFirst={i === 0}
-                  />
-                ))}
-                {day.activities.length === 0 && (
-                  <div className="swipe-hint" style={{ textAlign: "left", paddingLeft: 2 }}>
-                    Add activities below
-                  </div>
-                )}
-                <div className="flex gap-8 mt-8">
-                  <input
-                    className="input flex-1"
-                    style={{ padding: "7px 11px", fontSize: 12 }}
-                    placeholder="Add activity…"
-                    value={newActs[day.id] || ""}
-                    onChange={(e) => setNewActs((p) => ({ ...p, [day.id]: e.target.value }))}
-                    onKeyDown={(e) => e.key === "Enter" && handleAdd(day.id)}
-                  />
-                  <button className="btn-ghost" onClick={() => handleAdd(day.id)}>
-                    Add
+              <div key={day.id} className="plan-day-wrap">
+                {dayIdx > 0 && (
+                  <button
+                    type="button"
+                    className="plan-insert-day"
+                    onClick={() => insertDay?.(dayIdx)}
+                    aria-label="Insert day"
+                    title="Insert day"
+                  >
+                    <span className="plan-day-plus" aria-hidden="true">
+                      +
+                    </span>
                   </button>
+                )}
+                <div
+                  id={`itin-day-${day.id}`}
+                  className={`day-card${expanded ? "" : " collapsed"}${flashId === `itin-day-${day.id}` ? " itin-flash" : ""}`}
+                >
+                  <div className="day-hdr">
+                    <button
+                      type="button"
+                      className="day-title"
+                      aria-expanded={expanded}
+                      onClick={() => toggleDay(day.id)}
+                    >
+                      <span className="day-chevron" aria-hidden="true">
+                        ▸
+                      </span>
+                      <span className="day-title-stack">
+                        <span className="day-title-text">{day.label}</span>
+                        {trip.startDate && (
+                          <span className="day-date">
+                            {addDays(trip.startDate, dayIdx).toLocaleDateString(undefined, {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        )}
+                        {!expanded && <span className="day-oneliner">{oneLiner}</span>}
+                      </span>
+                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {ds > 0 && (
+                        <span className="linked-badge" onClick={() => navigateTo(3)}>
+                          💰 {baseCurrency} {ds.toFixed(0)}
+                        </span>
+                      )}
+                      {dm > 0 && (
+                        <span
+                          className="linked-badge"
+                          style={{
+                            background: "var(--amber-glow)",
+                            borderColor: "var(--amber-dim)",
+                            color: "var(--amber)",
+                          }}
+                          onClick={() => navigateTo(5)}
+                        >
+                          📸 {dm}
+                        </span>
+                      )}
+                      <button type="button" className="btn-del" onClick={() => removeDay(day.id)}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <div className="day-body">
+                    {day.activities.map((act, i) => (
+                      <SwipeableActivity
+                        key={act.id}
+                        act={act}
+                        dayId={day.id}
+                        onToggle={() => toggleActivity(day.id, act.id)}
+                        onDelete={() => removeActivity(day.id, act.id)}
+                        onExpense={() => onQuickExpense(act, day)}
+                        onMemory={() => onQuickMemory(act, day)}
+                        onLocate={
+                          locatableIds.has(String(act.id))
+                            ? () => handleLocate(act.id, day.id)
+                            : undefined
+                        }
+                        isFirst={i === 0}
+                        flash={flashId === `itin-act-${act.id}`}
+                      />
+                    ))}
+                    {day.activities.length === 0 ? (
+                      <div className="swipe-hint" style={{ textAlign: "left", paddingLeft: 2 }}>
+                        Add activities below
+                      </div>
+                    ) : (
+                      <div className="swipe-hint">← swipe to delete · swipe to complete →</div>
+                    )}
+                    <div className="flex gap-8 mt-8">
+                      <input
+                        className="input flex-1"
+                        style={{ padding: "7px 11px", fontSize: 12 }}
+                        placeholder="Add activity…"
+                        value={newActs[day.id] || ""}
+                        onChange={(e) => setNewActs((p) => ({ ...p, [day.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && handleAdd(day.id)}
+                      />
+                      <button className="btn-ghost" onClick={() => handleAdd(day.id)}>
+                        Add
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )
           })
         )}
+
+        <div className="plan-day-wrap plan-add-day-wrap">
+          <button
+            type="button"
+            className="plan-insert-day plan-add-day"
+            onClick={addDay}
+            aria-label="Add day"
+            title="Add day"
+          >
+            <span className="plan-day-plus" aria-hidden="true">
+              +
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   )
 }
-
-/* ── PACK Tab ─────────────────────────────────────────────────────────────── */

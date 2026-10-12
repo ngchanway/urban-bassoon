@@ -658,7 +658,7 @@ export function ShareModal({
                           <div style={{ fontSize: 40, marginBottom: 10 }}>🎉</div>
                           <div
                             style={{
-                              fontFamily: "'Playfair Display',serif",
+                              fontFamily: "'DM Sans',sans-serif",
                               fontSize: 17,
                               color: "#4DB87A",
                               marginBottom: 6,

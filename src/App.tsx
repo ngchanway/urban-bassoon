@@ -1,5 +1,16 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import "leaflet/dist/leaflet.css"
+import {
+  IconBudget,
+  IconDocs,
+  IconExplore,
+  IconHome,
+  IconMemories,
+  IconMenu,
+  IconPack,
+  IconPlan,
+  IconShare,
+} from "./components/shared/Icons"
 import { ShareModal } from "./components/shared/ShareModal"
 import { TripDrawer } from "./components/shared/TripDrawer"
 import { BudgetTab } from "./components/tabs/BudgetTab"
@@ -879,16 +890,29 @@ export default function App() {
   }, [expenses, dailyBudget])
 
   // ── Itinerary ──
+  const renumberDays = (days) =>
+    days.map((d, i) => {
+      const n = i + 1
+      const raw = String(d.label || "")
+      const m = raw.match(/^Day\s+\d+(\s*[·•\-]\s*)?(.*)$/i)
+      const rest = m ? (m[2] || "").trim() : raw.trim()
+      return {
+        ...d,
+        day: n,
+        label: rest && !/^Day\s+\d+$/i.test(rest) ? `Day ${n} · ${rest}` : `Day ${n}`,
+      }
+    })
   const addDay = () => {
     const n = itinerary.length + 1
     saveItinerary([...itinerary, { id: Date.now(), day: n, label: `Day ${n}`, activities: [] }])
   }
-  const removeDay = (id) =>
-    saveItinerary(
-      itinerary
-        .filter((d) => d.id !== id)
-        .map((d, i) => ({ ...d, day: i + 1, label: `Day ${i + 1}` })),
-    )
+  const insertDay = (index) => {
+    const i = Math.max(0, Math.min(Number(index) || 0, itinerary.length))
+    const next = [...itinerary]
+    next.splice(i, 0, { id: Date.now(), day: i + 1, label: `Day ${i + 1}`, activities: [] })
+    saveItinerary(renumberDays(next))
+  }
+  const removeDay = (id) => saveItinerary(renumberDays(itinerary.filter((d) => d.id !== id)))
   const addActivity = (dayId, text) =>
     saveItinerary(
       itinerary.map((d) =>
@@ -1105,13 +1129,13 @@ export default function App() {
         .join("  ·  ") || "Where are you headed?"
 
   const TABS = [
-    { label: "Home", icon: "🏠" },
-    { label: "Plan", icon: "📋" },
-    { label: "Pack", icon: "🧳" },
-    { label: "Budget", icon: "💰" },
-    { label: "Explore", icon: "🌍" },
-    { label: "Memories", icon: "📸" },
-    { label: "Docs", icon: "🗄️" },
+    { label: "Home", icon: <IconHome size={20} /> },
+    { label: "Plan", icon: <IconPlan size={20} /> },
+    { label: "Pack", icon: <IconPack size={20} /> },
+    { label: "Budget", icon: <IconBudget size={20} /> },
+    { label: "Explore", icon: <IconExplore size={20} /> },
+    { label: "Memories", icon: <IconMemories size={20} /> },
+    { label: "Docs", icon: <IconDocs size={20} /> },
   ]
 
   // ── Deep-link trip code ──
@@ -1189,18 +1213,14 @@ export default function App() {
 
       {/* Header */}
       <div className="header">
-        {demoMode && (
-          <div className="japan-navi-badge" aria-label="Japan Navi Journey">
-            Japan Navi Journey
-          </div>
-        )}
         <div className="header-top">
           <button
             className="trip-switcher-btn"
             onClick={() => setShowDrawer(true)}
             title="Switch trip"
+            aria-label="Switch trip"
           >
-            ⊞
+            <IconMenu size={18} />
           </button>
           <input
             className="trip-name-input flex-1"
@@ -1209,9 +1229,6 @@ export default function App() {
             placeholder={demoMode ? "Nakasendo Walking Journey" : "✈️ Name Your Trip"}
           />
           <div style={{ display: "flex", gap: 7, alignItems: "center", flexShrink: 0 }}>
-            <div className="progress-pill">
-              🧳 {packingDone}/{packingTotal}
-            </div>
             {(syncEnabled || LS.get("tc_share_blobid", "")) &&
               (() => {
                 const sl = syncLabel()
@@ -1237,12 +1254,13 @@ export default function App() {
               className="header-share-btn"
               onClick={() => setShowShare(true)}
               title="Share & Invite"
+              aria-label="Share and invite"
             >
-              📤
+              <IconShare size={18} />
             </button>
           </div>
         </div>
-        <div className="header-sub">{subtitle}</div>
+        {tab !== 1 && <div className="header-sub">{subtitle}</div>}
       </div>
 
       {/* Content */}
@@ -1265,6 +1283,8 @@ export default function App() {
               onQuickExpense={(a, d) => setQuickExpense({ act: a, day: d })}
               onQuickMemory={onQuickMemory}
               saveTrip={saveTrip}
+              people={people}
+              savePeople={savePeople}
               hasInvite={syncEnabled || Boolean(LS.get("tc_share_blobid", ""))}
               demoMode={demoMode}
               guideContact={demoMode ? GUIDE_CONTACT : null}
@@ -1277,6 +1297,7 @@ export default function App() {
               saveTrip={saveTrip}
               itinerary={itinerary}
               addDay={addDay}
+              insertDay={insertDay}
               addActivity={addActivity}
               toggleActivity={toggleActivity}
               removeDay={removeDay}
@@ -1551,7 +1572,7 @@ export default function App() {
               <div style={{ fontSize: 40 }}>🔗</div>
               <div
                 style={{
-                  fontFamily: "'Playfair Display',serif",
+                  fontFamily: "'DM Sans',sans-serif",
                   fontSize: 16,
                   color: "var(--amber)",
                 }}

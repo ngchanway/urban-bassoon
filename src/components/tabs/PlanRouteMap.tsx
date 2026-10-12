@@ -1,7 +1,7 @@
 import L from "leaflet"
 import { useEffect, useRef, useState } from "react"
 import { DEMO_TRIP_ID } from "../../lib/demo/nakasendo"
-import { cartoDarkRasterUrlTemplate, hasCartoBasemapKey } from "../../lib/maps/cartoBasemap"
+import { cartoRasterUrlTemplate } from "../../lib/maps/cartoBasemap"
 import { getMapEntitlements } from "../../lib/maps/mapEntitlements"
 import { DEMO_HIKE_ROUTES, boundsFromCoords } from "../../lib/maps/nakasendoRoutes"
 import {
@@ -15,7 +15,6 @@ import {
 import { ensurePlaceNote, formatStopPopup, getPlaceNote } from "../../lib/maps/placeNotes"
 import {
   type PlanStop,
-  boundsFromStops,
   findStopForActivity,
   planStopsResolveKey,
   resolvePlanStops,
@@ -40,7 +39,12 @@ type Props = {
   tripKey: string
   focusActivityId?: string | number | null
   onFocusConsumed?: () => void
+  onLocateMiss?: () => void
+  onRevealItinerary?: (opts: { dayId?: string; activityId?: string }) => void
+  onLocatableIds?: (ids: string[]) => void
 }
+
+const MAP_MAX_ZOOM = 18
 
 function stopColor(kind: PlanStop["kind"]) {
   if (kind === "hub") return "#5B8CFF"
@@ -65,6 +69,35 @@ function formatSavedAt(iso: string) {
   }
 }
 
+function popupOpts(
+  stop: PlanStop,
+  note: ReturnType<typeof getPlaceNote>,
+  opts?: { expanded?: boolean; compact?: boolean },
+) {
+  return {
+    title: stop.label,
+    localLabel: stop.localLabel,
+    dayLabel: stop.dayLabel,
+    activitySnippet: stop.activitySnippet,
+    kind: stop.kind,
+    note,
+    dayId: stop.dayId,
+    activityId: stop.activityIds[0],
+    stopId: stop.id,
+    expanded: opts?.expanded,
+    compact: opts?.compact,
+  }
+}
+
+const LEAFLET_POPUP_OPTS: L.PopupOptions = {
+  maxWidth: 260,
+  maxHeight: 120,
+  autoPan: true,
+  keepInView: true,
+  autoPanPadding: [20, 20],
+  closeButton: false,
+}
+
 export function PlanRouteMap({
   trip,
   itinerary,
@@ -72,12 +105,19 @@ export function PlanRouteMap({
   tripKey,
   focusActivityId = null,
   onFocusConsumed,
+  onLocateMiss,
+  onRevealItinerary,
+  onLocatableIds,
 }: Props) {
   const mapEl = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
   const layerRef = useRef<L.LayerGroup | null>(null)
+  const tileLayerRef = useRef<L.TileLayer | null>(null)
+  const onLocatableIdsRef = useRef(onLocatableIds)
+  onLocatableIdsRef.current = onLocatableIds
   const markersByActivityId = useRef<Record<string, L.Marker>>({})
   const markersByStopId = useRef<Record<string, L.Marker>>({})
+  const stopsRef = useRef<PlanStop[]>([])
   const [stops, setStops] = useState<PlanStop[]>([])
   const [secondaryTruncated, setSecondaryTruncated] = useState(false)
   const [resolving, setResolving] = useState(false)
@@ -89,14 +129,23 @@ export function PlanRouteMap({
   const [progress, setProgress] = useState<PackProgress | null>(null)
   const [packError, setPackError] = useState("")
   const [notesTick, setNotesTick] = useState(0)
-  const [showPlusInfo, setShowPlusInfo] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
   const skipNextFit = useRef(false)
+  const onRevealRef = useRef(onRevealItinerary)
+  const onFocusConsumedRef = useRef(onFocusConsumed)
+  const onLocateMissRef = useRef(onLocateMiss)
+  const itineraryRef = useRef(itinerary)
+  onRevealRef.current = onRevealItinerary
+  onFocusConsumedRef.current = onFocusConsumed
+  onLocateMissRef.current = onLocateMiss
+  itineraryRef.current = itinerary
 
   const resolveKey = planStopsResolveKey(trip, itinerary, memories, tripKey)
   const entitlements = getMapEntitlements({ tripKey })
   const showHikes = tripKey === DEMO_TRIP_ID
   const eligible = stops.filter((s) => s.offlineEligible)
   const stale = isOfflinePackStale(meta)
+  stopsRef.current = stops
 
   useEffect(() => {
     const on = () => setOnline(true)
@@ -134,20 +183,101 @@ export function PlanRouteMap({
 
   useEffect(() => {
     if (!mapEl.current || mapRef.current) return
-    const map = L.map(mapEl.current, { zoomControl: true, attributionControl: false })
-    L.tileLayer(cartoDarkRasterUrlTemplate(), {
-      maxZoom: 19,
+    const map = L.map(mapEl.current, {
+      zoomControl: false,
+      attributionControl: false,
+      maxZoom: MAP_MAX_ZOOM,
+      minZoom: 2,
+    })
+    const tiles = L.tileLayer(cartoRasterUrlTemplate(), {
+      maxZoom: MAP_MAX_ZOOM,
+      maxNativeZoom: MAP_MAX_ZOOM,
       subdomains: "abcd",
     }).addTo(map)
+    tileLayerRef.current = tiles
     map.setView([20, 0], 2)
+    map.doubleClickZoom.disable()
+    const onDblClick = () => setFullscreen((f) => !f)
+    map.on("dblclick", onDblClick)
     layerRef.current = L.layerGroup().addTo(map)
     mapRef.current = map
     return () => {
+      map.off("dblclick", onDblClick)
       map.remove()
       mapRef.current = null
       layerRef.current = null
+      tileLayerRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const ids = new Set<string>()
+    for (const s of stops) {
+      for (const id of s.activityIds) ids.add(String(id))
+    }
+    onLocatableIdsRef.current?.([...ids])
+  }, [stops])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const t = setTimeout(() => map.invalidateSize(), 120)
+    return () => clearTimeout(t)
+  }, [fullscreen])
+
+  useEffect(() => {
+    if (!fullscreen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [fullscreen])
+
+  const handlePopupDomClick = (e: Event) => {
+    const t = e.target as HTMLElement | null
+    if (!t) return
+    const itin = t.closest(".popup-itin-link") as HTMLElement | null
+    if (!itin) return
+    e.preventDefault()
+    e.stopPropagation()
+    setFullscreen(false)
+    onRevealRef.current?.({
+      dayId: itin.dataset.dayId,
+      activityId: itin.dataset.activityId,
+    })
+  }
+
+  const tileMaxZoom = () => {
+    const packMax = meta && meta.tripKey === tripKey ? meta.zMax : undefined
+    return packMax != null ? Math.min(MAP_MAX_ZOOM, packMax) : MAP_MAX_ZOOM
+  }
+
+  const fitTripView = (map: L.Map, stopList: PlanStop[], withHikes: boolean) => {
+    const routes = withHikes ? DEMO_HIKE_ROUTES : []
+    const tripStops = stopList.filter((s) => s.offlineEligible)
+    const fitPts: [number, number][] = [
+      ...(tripStops.length ? tripStops : stopList).map((s) => [s.lat, s.lng] as [number, number]),
+      ...routes.flatMap((r) => r.coordinates),
+    ]
+    if (fitPts.length === 0) return
+    try {
+      const bounds = L.latLngBounds(fitPts)
+      const maxZ = tileMaxZoom()
+      map.setMaxZoom(maxZ)
+      if (tileLayerRef.current) {
+        tileLayerRef.current.options.maxZoom = maxZ
+        tileLayerRef.current.options.maxNativeZoom = maxZ
+      }
+      // Allow fit to set the overview zoom first
+      map.setMinZoom(2)
+      map.fitBounds(bounds, { padding: [36, 36], maxZoom: Math.min(12, maxZ) })
+      // Default view is the floor — no zooming out into empty world
+      map.setMinZoom(map.getZoom())
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     const map = mapRef.current
@@ -166,6 +296,7 @@ export function PlanRouteMap({
       })
         .bindPopup(
           `<div class="popup-title">${route.label}</div><div class="popup-meta">${route.dayHint}</div>`,
+          LEAFLET_POPUP_OPTS,
         )
         .addTo(layer)
     }
@@ -183,15 +314,7 @@ export function PlanRouteMap({
         popupAnchor: [0, -10],
       })
       const marker = L.marker([stop.lat, stop.lng], { icon })
-        .bindPopup(
-          formatStopPopup({
-            title: stop.label,
-            dayLabel: stop.dayLabel,
-            activitySnippet: stop.activitySnippet,
-            kind: stop.kind,
-            note,
-          }),
-        )
+        .bindPopup(formatStopPopup(popupOpts(stop, note)), LEAFLET_POPUP_OPTS)
         .addTo(layer)
 
       markersByStopId.current[stop.id] = marker
@@ -199,7 +322,12 @@ export function PlanRouteMap({
         markersByActivityId.current[aid] = marker
       }
 
-      marker.on("popupopen", () => {
+      marker.on("popupopen", (ev) => {
+        const popupEl = (ev as L.PopupEvent).popup?.getElement?.()
+        if (popupEl) {
+          L.DomEvent.off(popupEl, "click", handlePopupDomClick)
+          L.DomEvent.on(popupEl, "click", handlePopupDomClick)
+        }
         if (getPlaceNote(stop.noteKey)) return
         void ensurePlaceNote(
           stop.noteKey,
@@ -207,33 +335,14 @@ export function PlanRouteMap({
           [stop.dayLabel, stop.activitySnippet].filter(Boolean).join(" · "),
         ).then((n) => {
           if (!n) return
-          marker.setPopupContent(
-            formatStopPopup({
-              title: stop.label,
-              dayLabel: stop.dayLabel,
-              activitySnippet: stop.activitySnippet,
-              kind: stop.kind,
-              note: n,
-            }),
-          )
-          setNotesTick((t) => t + 1)
+          marker.setPopupContent(formatStopPopup(popupOpts(stop, n)))
+          setNotesTick((tick) => tick + 1)
         })
       })
     }
 
     if (!skipNextFit.current) {
-      const tripStops = stops.filter((s) => s.offlineEligible)
-      const fitPts: [number, number][] = [
-        ...(tripStops.length ? tripStops : stops).map((s) => [s.lat, s.lng] as [number, number]),
-        ...routes.flatMap((r) => r.coordinates),
-      ]
-      if (fitPts.length > 0) {
-        try {
-          map.fitBounds(fitPts, { padding: [36, 36], maxZoom: 12 })
-        } catch {
-          /* ignore */
-        }
-      }
+      fitTripView(map, stops, showHikes)
     }
     skipNextFit.current = false
     setTimeout(() => map.invalidateSize(), 80)
@@ -244,25 +353,48 @@ export function PlanRouteMap({
     const map = mapRef.current
     if (!map) return
     const id = String(focusActivityId)
+    const stopList = stopsRef.current
     let marker = markersByActivityId.current[id]
-    let stop = findStopForActivity(stops, id)
+    let stop = findStopForActivity(stopList, id)
     if (!marker && stop) marker = markersByStopId.current[stop.id]
     if (!stop) {
-      // Fallback: day place for the activity's day
-      const day = itinerary.find((d) => (d.activities || []).some((a) => String(a.id) === id))
+      const day = itineraryRef.current.find((d) =>
+        (d.activities || []).some((a) => String(a.id) === id),
+      )
       if (day) {
         stop =
-          stops.find((s) => s.dayId === day.id && (s.kind === "day" || s.kind === "stay")) || null
+          stopList.find(
+            (s) => String(s.dayId) === String(day.id) && (s.kind === "day" || s.kind === "stay"),
+          ) || null
         if (stop) marker = markersByStopId.current[stop.id]
       }
     }
     if (stop && marker) {
       skipNextFit.current = true
-      map.flyTo([stop.lat, stop.lng], 14, { duration: 1.1 })
-      setTimeout(() => marker?.openPopup(), 400)
+      let finished = false
+      const finish = () => {
+        if (finished) return
+        finished = true
+        const note = getPlaceNote(stop.noteKey)
+        marker.setPopupContent(formatStopPopup(popupOpts(stop, note, { compact: true })))
+        marker.openPopup()
+        onFocusConsumedRef.current?.()
+      }
+      map.once("moveend", finish)
+      const fallback = window.setTimeout(finish, 1200)
+      const alreadyClose =
+        map.getZoom() >= 13 && map.distance(map.getCenter(), L.latLng(stop.lat, stop.lng)) < 80
+      const focusZ = Math.min(14, map.getMaxZoom())
+      map.flyTo([stop.lat, stop.lng], focusZ, { duration: alreadyClose ? 0.35 : 1.1 })
+      if (alreadyClose) window.setTimeout(finish, 80)
+      return () => {
+        map.off("moveend", finish)
+        window.clearTimeout(fallback)
+      }
     }
-    onFocusConsumed?.()
-  }, [focusActivityId, stops, itinerary, onFocusConsumed])
+    onLocateMissRef.current?.()
+    onFocusConsumedRef.current?.()
+  }, [focusActivityId])
 
   const hikeBounds = (showHikes ? DEMO_HIKE_ROUTES : [])
     .map((r) => boundsFromCoords(r.coordinates, 0.1))
@@ -302,135 +434,93 @@ export function PlanRouteMap({
     runPack(true)
   }
 
+  const onResetView = () => {
+    const map = mapRef.current
+    if (!map) return
+    map.closePopup()
+    fitTripView(map, stops, showHikes)
+  }
+
   const empty = stops.length === 0 && !showHikes
-  const spanHint =
-    eligible.length > 0 &&
-    (() => {
-      const b = boundsFromStops(eligible)
-      if (!b) return false
-      return b.north - b.south > 8 || b.east - b.west > 8
-    })()
+  const offlineStatus = metaForTrip
+    ? `Offline saved${metaForTrip.savedAt ? ` · ${formatSavedAt(metaForTrip.savedAt)}` : ""}${stale ? " · Stale" : ""}`
+    : "No offline pack"
+  const statusParts = [
+    online ? "Online" : "Offline",
+    resolving ? "Locating…" : stops.length > 0 ? `${stops.length} pins` : null,
+    offlineStatus,
+  ].filter(Boolean)
+
+  const firstSave = !metaForTrip
+  const savePrimary = packing || firstSave
 
   return (
-    <div className="card">
-      <div className="card-title">🗺️ Route map</div>
-      {empty && !resolving && (
-        <div className="empty" style={{ padding: "12px 8px 4px" }}>
-          <div className="empty-msg">Add itinerary days to see pins for places you will visit</div>
-        </div>
-      )}
-      <div id="plan-route-map" ref={mapEl} />
-      <div
-        className="map-hint"
-        style={{ justifyContent: "flex-start", flexWrap: "wrap", gap: 8, fontSize: 11 }}
-      >
-        <span>© OpenStreetMap contributors · © CARTO</span>
-      </div>
-      <div className="map-hint" style={{ justifyContent: "flex-start", flexWrap: "wrap", gap: 8 }}>
-        <span>{online ? "Online" : "Offline"}</span>
-        <span>·</span>
-        {metaForTrip ? (
-          <span>
-            Offline map saved
-            {metaForTrip.savedAt ? ` · Updated ${formatSavedAt(metaForTrip.savedAt)}` : ""}
-            {stale ? " · Stale (30+ days)" : ""}
-          </span>
-        ) : (
-          <span>No offline map yet</span>
-        )}
-        {resolving && <span>· Locating stops…</span>}
-        {!resolving && stops.length > 0 && (
-          <span>
-            · {stops.length} pins ({eligible.length} offline)
-          </span>
-        )}
-        {resolving && stops.length > 0 && <span>· {stops.length} found…</span>}
-      </div>
-      <div style={{ fontSize: 11, color: "rgba(230,217,194,0.45)", marginTop: 4 }}>
-        Tap an itinerary item to fly to its pin · Amber = hotel · Teal = transit
-      </div>
-      {secondaryTruncated && (
+    <div className={`card app-map-sticky${fullscreen ? " plan-map-fullscreen" : ""}`}>
+      <div className="plan-map-shell">
         <button
           type="button"
-          className="btn-ghost"
-          style={{
-            fontSize: 12,
-            marginTop: 6,
-            padding: "6px 8px",
-            textAlign: "left",
-            width: "100%",
-            color: "rgba(232,201,168,0.9)",
-          }}
-          onClick={() => setShowPlusInfo(true)}
+          className="plan-map-tool-btn plan-map-tool-reset"
+          onClick={onResetView}
+          title="Reset view"
+          aria-label="Reset view"
         >
-          Showing hotels &amp; transit. Unlock TravelPal Plus for every walk stop on the map.
+          ⌂
         </button>
-      )}
-      {showPlusInfo && (
-        <div
-          style={{
-            fontSize: 12,
-            color: "rgba(230,217,194,0.7)",
-            marginTop: 6,
-            padding: "10px 12px",
-            border: "1px solid rgba(255,168,40,0.2)",
-            borderRadius: 10,
-            background: "rgba(7,16,31,0.5)",
-          }}
+        <button
+          type="button"
+          className="plan-map-tool-btn plan-map-tool-full"
+          onClick={() => setFullscreen((f) => !f)}
+          title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+          aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
         >
-          <div style={{ fontWeight: 600, marginBottom: 4, color: "var(--amber)" }}>
-            TravelPal Plus (coming soon)
+          {fullscreen ? "✕" : "⛶"}
+        </button>
+        {empty && !resolving && (
+          <div className="plan-map-empty">
+            <div className="empty-msg">
+              Add itinerary days to see pins for places you will visit
+            </div>
           </div>
-          Full secondary map pins, more geocoding, and larger offline packs. Set{" "}
-          <code>tc_map_plus</code> in localStorage to preview, or use the Japan Navi demo.
-          <button
-            type="button"
-            className="btn-ghost"
-            style={{ display: "block", marginTop: 8, fontSize: 12 }}
-            onClick={() => setShowPlusInfo(false)}
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-      {(spanHint || canPack) && (
-        <div style={{ fontSize: 12, color: "rgba(230,217,194,0.5)", marginTop: 4 }}>
-          Offline map covers places you navigate on the trip (not home airports).
-        </div>
-      )}
-      {stale && online && meta && (
-        <div style={{ fontSize: 12, color: "#e8c9a8", marginTop: 4 }}>
-          Offline tiles are older than 30 days — update when online.
-        </div>
-      )}
-      {!hasCartoBasemapKey() && (
-        <div style={{ fontSize: 12, color: "rgba(230,217,194,0.55)", marginTop: 6 }}>
-          Add <code>VITE_CARTO_BASEMAPS_API_KEY</code> to <code>.env.local</code> and rebuild to
-          remove the API key watermark.
-        </div>
-      )}
-      <div className="flex gap-8 mt-8" style={{ flexWrap: "wrap" }}>
-        <button
-          type="button"
-          className="btn btn-sm"
-          disabled={!online || !canPack || packing}
-          onClick={onSave}
-        >
-          {packing && progress ? `Saving… ${progress.done}/${progress.total}` : "Save map offline"}
-        </button>
-        {meta && online && (
-          <button
-            type="button"
-            className="btn-ghost"
-            style={{ fontSize: 12, padding: "6px 10px" }}
-            disabled={packing || !canPack}
-            onClick={onUpdate}
-          >
-            Update offline map
-          </button>
         )}
+        <div id="plan-route-map" ref={mapEl} />
       </div>
-      {packError && <div style={{ fontSize: 12, color: "#ff8a8a", marginTop: 8 }}>{packError}</div>}
+      {!fullscreen && (
+        <div className="plan-map-meta">
+          <div className="plan-map-meta-row">
+            <div className="plan-map-status">{statusParts.join(" · ")}</div>
+            <div className="plan-map-meta-actions">
+              <button
+                type="button"
+                className={
+                  savePrimary ? "btn btn-sm plan-map-meta-btn" : "btn-ghost plan-map-meta-btn"
+                }
+                disabled={!online || !canPack || packing}
+                onClick={onSave}
+              >
+                {packing && progress
+                  ? `Saving… ${progress.done}/${progress.total}`
+                  : "Save map offline"}
+              </button>
+              {meta && online && (
+                <button
+                  type="button"
+                  className="btn-ghost plan-map-meta-btn"
+                  disabled={packing || !canPack}
+                  onClick={onUpdate}
+                >
+                  Update
+                </button>
+              )}
+            </div>
+          </div>
+          {secondaryTruncated && (
+            <div className="plan-map-status plan-map-status-hint">
+              Hotels &amp; transit shown — Plus for all stops.
+            </div>
+          )}
+          {packError && <div className="plan-map-pack-error">{packError}</div>}
+        </div>
+      )}
     </div>
   )
 }

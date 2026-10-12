@@ -1,6 +1,6 @@
 import { LS } from "../storage"
 
-export type GeoHit = { lat: number; lng: number; label: string; at: string }
+export type GeoHit = { lat: number; lng: number; label: string; at: string; local?: string }
 
 const GEO_KEY = "tc_plan_geo"
 const MIN_INTERVAL_MS = 200
@@ -39,6 +39,7 @@ export function mergeGeocodeCache(entries: Record<string, Omit<GeoHit, "at"> & {
       lng: hit.lng,
       label: hit.label || query,
       at: hit.at || now,
+      ...(hit.local?.trim() ? { local: hit.local.trim() } : {}),
     }
   }
   saveCache(next)

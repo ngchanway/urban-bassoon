@@ -11,7 +11,7 @@ import { LS } from "../storage"
 import { snapshotTrip } from "../trip"
 
 /** Known places for Plan Route map (seeded into tc_plan_geo). */
-const DEMO_GEO: Record<string, { lat: number; lng: number; label: string }> = {
+const DEMO_GEO: Record<string, { lat: number; lng: number; label: string; local?: string }> = {
   singapore: { lat: 1.3644, lng: 103.9915, label: "Singapore Changi Airport" },
   "singapore changi airport": {
     lat: 1.3644,
@@ -19,55 +19,100 @@ const DEMO_GEO: Record<string, { lat: number; lng: number; label: string }> = {
     label: "Singapore Changi Airport",
   },
   changi: { lat: 1.3644, lng: 103.9915, label: "Singapore Changi Airport" },
-  narita: { lat: 35.7767, lng: 140.3185, label: "Narita" },
-  "narita airport": { lat: 35.772, lng: 140.3929, label: "Narita Airport" },
-  shinjuku: { lat: 35.6938, lng: 139.7034, label: "Shinjuku" },
-  nagoya: { lat: 35.1815, lng: 136.9066, label: "Nagoya" },
-  nakatsugawa: { lat: 35.4875, lng: 137.5006, label: "Nakatsugawa" },
-  "nakatsugawa-juku": { lat: 35.4875, lng: 137.5006, label: "Nakatsugawa-juku" },
-  magome: { lat: 35.5264, lng: 137.5647, label: "Magome" },
-  tsumago: { lat: 35.5772, lng: 137.595, label: "Tsumago" },
-  "kiso valley": { lat: 35.7, lng: 137.7, label: "Kiso Valley" },
-  kiso: { lat: 35.7, lng: 137.7, label: "Kiso" },
-  narai: { lat: 35.9703, lng: 137.8125, label: "Narai" },
-  "narai-juku": { lat: 35.9703, lng: 137.8125, label: "Narai-juku" },
-  matsumoto: { lat: 36.2381, lng: 137.972, label: "Matsumoto" },
-  "matsumoto castle": { lat: 36.2386, lng: 137.9689, label: "Matsumoto Castle" },
-  haneda: { lat: 35.5494, lng: 139.7798, label: "Haneda" },
-  tokyo: { lat: 35.6762, lng: 139.6503, label: "Tokyo" },
-  "torii pass": { lat: 35.99, lng: 137.75, label: "Torii Pass" },
-  "torii pass area": { lat: 35.99, lng: 137.75, label: "Torii Pass area" },
+  narita: { lat: 35.7767, lng: 140.3185, label: "Narita", local: "成田" },
+  "narita airport": {
+    lat: 35.772,
+    lng: 140.3929,
+    label: "Narita Airport",
+    local: "成田空港",
+  },
+  shinjuku: { lat: 35.6938, lng: 139.7034, label: "Shinjuku", local: "新宿" },
+  nagoya: { lat: 35.1815, lng: 136.9066, label: "Nagoya", local: "名古屋" },
+  nakatsugawa: {
+    lat: 35.4875,
+    lng: 137.5006,
+    label: "Nakatsugawa",
+    local: "中津川",
+  },
+  "nakatsugawa-juku": {
+    lat: 35.4875,
+    lng: 137.5006,
+    label: "Nakatsugawa-juku",
+    local: "中津川宿",
+  },
+  magome: { lat: 35.5264, lng: 137.5647, label: "Magome", local: "馬籠" },
+  tsumago: { lat: 35.5772, lng: 137.595, label: "Tsumago", local: "妻籠" },
+  "kiso valley": { lat: 35.7, lng: 137.7, label: "Kiso Valley", local: "木曽谷" },
+  kiso: { lat: 35.7, lng: 137.7, label: "Kiso", local: "木曽" },
+  narai: { lat: 35.9703, lng: 137.8125, label: "Narai", local: "奈良井" },
+  "narai-juku": {
+    lat: 35.9703,
+    lng: 137.8125,
+    label: "Narai-juku",
+    local: "奈良井宿",
+  },
+  matsumoto: { lat: 36.2381, lng: 137.972, label: "Matsumoto", local: "松本" },
+  "matsumoto castle": {
+    lat: 36.2386,
+    lng: 137.9689,
+    label: "Matsumoto Castle",
+    local: "松本城",
+  },
+  haneda: { lat: 35.5494, lng: 139.7798, label: "Haneda", local: "羽田" },
+  tokyo: { lat: 35.6762, lng: 139.6503, label: "Tokyo", local: "東京" },
+  "torii pass": { lat: 35.99, lng: 137.75, label: "Torii Pass", local: "鳥居峠" },
+  "torii pass area": {
+    lat: 35.99,
+    lng: 137.75,
+    label: "Torii Pass area",
+    local: "鳥居峠",
+  },
   "daiwa roynet hotel nagoya taiko-dori side": {
     lat: 35.1706,
     lng: 136.8816,
     label: "Daiwa Roynet Hotel Nagoya Taiko-dori Side",
+    local: "ダイワロイネットホテル名古屋太閤通口",
   },
   "daiwa roynet hotel nagoya": {
     lat: 35.1706,
     lng: 136.8816,
     label: "Daiwa Roynet Hotel Nagoya",
+    local: "ダイワロイネットホテル名古屋",
   },
   "plaza hotel sakae nakatsugawa": {
     lat: 35.4885,
     lng: 137.5025,
     label: "Plaza Hotel Sakae Nakatsugawa",
+    local: "プラザホテル栄 中津川",
   },
-  "nezame hotel": { lat: 35.7235, lng: 137.7035, label: "Nezame Hotel" },
-  "yamaniwa inn": { lat: 35.965, lng: 137.808, label: "YAMANIWA INN" },
+  "nezame hotel": {
+    lat: 35.7235,
+    lng: 137.7035,
+    label: "Nezame Hotel",
+    local: "寝覚ホテル",
+  },
+  "yamaniwa inn": {
+    lat: 35.965,
+    lng: 137.808,
+    label: "YAMANIWA INN",
+    local: "山庭",
+  },
   "traveler's inn takagi": {
     lat: 36.2395,
     lng: 137.9695,
     label: "Traveler's Inn Takagi",
+    local: "旅人の宿 高木",
   },
   "shinjuku washington hotel": {
     lat: 35.6915,
     lng: 139.7005,
     label: "Shinjuku Washington Hotel",
+    local: "新宿ワシントンホテル",
   },
 }
 
 /** Culture notes + cautions for Plan map popups (tc_place_notes). */
-const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string }> = {
+const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl?: string }> = {
   "singapore changi airport": {
     text: "Changi is consistently ranked among the world’s best airports — Jewel’s indoor waterfall and gardens make a long layover feel like a mini outing.",
     caution:
@@ -112,11 +157,13 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string }> = {
     text: "Magome-juku clings to a steep cobbled street with wooden inns looking over the valley — one of the most photographed Nakasendo towns.",
     caution:
       "Stone streets are slippery when wet; wear shoes with grip and mind your knees on the downhill toward Tsumago.",
+    moreUrl: "https://en.wikipedia.org/wiki/Magome-juku",
   },
   tsumago: {
     text: "Tsumago carefully preserves Edo-period streetscapes; overhead wires are hidden and cars are restricted so the post town feels timeless.",
     caution:
       "Respect no-photography signs at private inns; keep voices low in the evening residential lanes.",
+    moreUrl: "https://en.wikipedia.org/wiki/Tsumago-juku",
   },
   narai: {
     text: "Narai-juku, “Narai of a thousand houses,” was the wealthiest Kiso post town, stretched along a long, graceful main street.",
@@ -130,11 +177,13 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string }> = {
     text: "Matsumoto Castle’s black-and-white keep is one of Japan’s oldest original castles, set against the Japanese Alps.",
     caution:
       "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
+    moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
   },
   "matsumoto castle": {
     text: "Matsumoto Castle’s black-and-white keep is one of Japan’s oldest original castles, set against the Japanese Alps.",
     caution:
       "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
+    moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
   },
   haneda: {
     text: "Haneda sits closer to central Tokyo than Narita and is a convenient international departure point after time in the city.",

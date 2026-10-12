@@ -435,31 +435,6 @@ Rules:
 
   return (
     <div>
-      {/* Progress */}
-      <div className="card">
-        <div className="flex items-center justify-between">
-          <div className="card-title" style={{ marginBottom: 0 }}>
-            🧳 Packing List
-          </div>
-          <div className="progress-pill">
-            {packingDone}/{packingTotal} packed
-          </div>
-        </div>
-        <div className="prog-track">
-          <div className="prog-fill" style={{ width: `${pct}%` }} />
-        </div>
-        <div
-          style={{
-            textAlign: "right",
-            fontSize: 11,
-            color: "rgba(230,217,194,0.35)",
-            marginTop: 5,
-          }}
-        >
-          {pct}% complete
-        </div>
-      </div>
-
       {/* ── Weather Re-check Card ── */}
       <div className="recheck-card">
         {/* Header */}
@@ -468,7 +443,7 @@ Rules:
           style={{ marginBottom: showAlert || recheck.step !== "idle" ? 12 : 0 }}
         >
           <div className="card-title" style={{ marginBottom: 0, fontSize: 14, color: "#5BA4FF" }}>
-            🌤️ Weather Re-check
+            🌤️ Weather
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             {recheck.step === "ready" && recheck.result && (
@@ -484,17 +459,21 @@ Rules:
             )}
             {recheck.step !== "fetching" && recheck.step !== "analyzing" && (
               <button
+                type="button"
                 className="btn-ghost"
                 style={{
-                  fontSize: 11,
+                  fontSize: 16,
                   padding: "4px 10px",
                   borderColor: "rgba(91,164,255,0.3)",
                   color: "#5BA4FF",
+                  lineHeight: 1,
                 }}
                 onClick={runRecheck}
                 disabled={!trip.destination}
+                title="Refresh forecast"
+                aria-label="Refresh forecast"
               >
-                {recheck.step === "idle" ? "Run check" : "↺ Re-run"}
+                ↻
               </button>
             )}
             {(recheck.step === "fetching" || recheck.step === "analyzing") && (
@@ -703,7 +682,31 @@ Rules:
         )}
       </div>
 
-      {/* ── Templates Library Card ── */}
+      {/* Progress */}
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="card-title" style={{ marginBottom: 0 }}>
+            🧳 Packing List
+          </div>
+          <div className="progress-pill">
+            {packingDone}/{packingTotal} packed
+          </div>
+        </div>
+        <div className="prog-track">
+          <div className="prog-fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div
+          style={{
+            textAlign: "right",
+            fontSize: 11,
+            color: "rgba(230,217,194,0.35)",
+            marginTop: 5,
+          }}
+        >
+          {pct}% complete
+        </div>
+      </div>
+
       {importFlash && (
         <div
           style={{
@@ -723,53 +726,6 @@ Rules:
           ✓ <strong>{importFlash}</strong> template imported to your packing list
         </div>
       )}
-
-      <div className="templates-card">
-        <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-          <div className="card-title" style={{ marginBottom: 0, fontSize: 14, color: "#AA88FF" }}>
-            📚 Trip Templates
-          </div>
-          <button
-            className="btn-ghost"
-            style={{
-              fontSize: 11,
-              padding: "4px 10px",
-              borderColor: "rgba(120,80,255,0.3)",
-              color: "#AA88FF",
-            }}
-            onClick={() => setShowTemplates((s) => !s)}
-          >
-            {showTemplates ? "Hide" : "Browse"}
-          </button>
-        </div>
-        <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
-          {importedIds.length > 0
-            ? `${importedIds.length} template${importedIds.length > 1 ? "s" : ""} imported · tap to add more`
-            : "One-tap packing lists for dive trips, ski, business travel and more"}
-        </div>
-
-        {showTemplates && (
-          <div className="template-grid">
-            {PACKING_TEMPLATES.map((tpl) => {
-              const already = countAlready(tpl)
-              const total = totalItems(tpl)
-              const imported = importedIds.includes(tpl.id)
-              return (
-                <div
-                  key={tpl.id}
-                  className={`template-tile${imported ? " imported" : ""}`}
-                  onClick={() => setSelectedTemplate(tpl.id)}
-                >
-                  {imported && <div className="template-tile-check">✓</div>}
-                  <div className="template-tile-emoji">{tpl.emoji}</div>
-                  <div className="template-tile-name">{tpl.name}</div>
-                  <div className="template-tile-count">{total} items</div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
 
       {/* ── Template Preview Sheet ── */}
       {selectedTemplate &&
@@ -1071,6 +1027,58 @@ Rules:
             ))}
           </div>
         )}
+
+        {/* Trip templates (merged into smart pack) */}
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+            <div className="card-title" style={{ marginBottom: 0, fontSize: 13, color: "#AA88FF" }}>
+              📚 Trip Templates
+            </div>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{
+                fontSize: 11,
+                padding: "4px 10px",
+                borderColor: "rgba(120,80,255,0.3)",
+                color: "#AA88FF",
+              }}
+              onClick={() => setShowTemplates((s) => !s)}
+            >
+              {showTemplates ? "Hide" : "Browse"}
+            </button>
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--text-dim)",
+              marginBottom: showTemplates ? 8 : 0,
+            }}
+          >
+            {importedIds.length > 0
+              ? `${importedIds.length} template${importedIds.length > 1 ? "s" : ""} imported · tap to add more`
+              : "One-tap packing lists for dive trips, ski, business travel and more"}
+          </div>
+          {showTemplates && (
+            <div className="template-grid">
+              {PACKING_TEMPLATES.map((tpl) => {
+                const imported = importedIds.includes(tpl.id)
+                return (
+                  <div
+                    key={tpl.id}
+                    className={`template-tile${imported ? " imported" : ""}`}
+                    onClick={() => setSelectedTemplate(tpl.id)}
+                  >
+                    {imported && <div className="template-tile-check">✓</div>}
+                    <div className="template-tile-emoji">{tpl.emoji}</div>
+                    <div className="template-tile-name">{tpl.name}</div>
+                    <div className="template-tile-count">{totalItems(tpl)} items</div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Existing packing categories */}
@@ -1090,7 +1098,7 @@ Rules:
                 <span
                   style={{
                     fontSize: 15,
-                    fontFamily: "'Playfair Display',serif",
+                    fontFamily: "'DM Sans',sans-serif",
                     color: "var(--amber)",
                   }}
                 >

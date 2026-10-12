@@ -1,4 +1,5 @@
 import { useRef, useState } from "react"
+import { IconCamera, IconExpense, IconMap } from "./Icons"
 
 export function SwipeableActivity({
   act,
@@ -9,6 +10,7 @@ export function SwipeableActivity({
   onMemory,
   onLocate,
   isFirst,
+  flash,
 }) {
   const THRESHOLD = 72 // px to trigger action
   const MAX_DRAG = 115 // max px drag before clamping
@@ -112,7 +114,8 @@ export function SwipeableActivity({
   return (
     <div
       ref={wrapRef}
-      className={`swipe-wrap${phase === "collapsing" ? " collapsing" : ""}`}
+      id={act?.id != null ? `itin-act-${act.id}` : undefined}
+      className={`swipe-wrap${phase === "collapsing" ? " collapsing" : ""}${flash ? " itin-flash" : ""}`}
       style={{
         maxHeight: phase === "collapsing" ? undefined : "none",
         overflow: "hidden",
@@ -163,16 +166,13 @@ export function SwipeableActivity({
           {isDone && "✓"}
         </div>
 
-        {/* Text — tap flies map to pin; long-press/swipe unchanged */}
+        {/* Text — tap toggles done; locate is the map icon */}
         <span
           className={`swipe-act-text${isDone ? " done" : ""}`}
-          role={onLocate ? "button" : undefined}
-          title={onLocate ? "Show on map" : undefined}
           onClick={(e) => {
             e.stopPropagation()
             if (touch.current.swiped || Math.abs(dx) > MIN_INTENT) return
-            if (onLocate) onLocate()
-            else onToggle()
+            onToggle()
           }}
         >
           {act.text}
@@ -183,6 +183,18 @@ export function SwipeableActivity({
           className="act-quick-btns"
           style={{ opacity: Math.max(0, 1 - Math.abs(dx) / 30), flexShrink: 0 }}
         >
+          {onLocate && (
+            <div
+              className="act-q-btn"
+              title="Show on map"
+              onClick={(e) => {
+                e.stopPropagation()
+                onLocate()
+              }}
+            >
+              <IconMap size={16} />
+            </div>
+          )}
           {onExpense && (
             <div
               className="act-q-btn"
@@ -192,7 +204,7 @@ export function SwipeableActivity({
                 onExpense()
               }}
             >
-              💰
+              <IconExpense size={16} />
             </div>
           )}
           {onMemory && (
@@ -204,7 +216,7 @@ export function SwipeableActivity({
                 onMemory()
               }}
             >
-              📸
+              <IconCamera size={16} />
             </div>
           )}
         </div>
