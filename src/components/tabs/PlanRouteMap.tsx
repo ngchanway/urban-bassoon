@@ -25,7 +25,14 @@ type Props = {
   itinerary: Array<{
     id: string
     label?: string
-    activities?: Array<{ id: string | number; text?: string; kind?: string; lodging?: boolean }>
+    activities?: Array<{
+      id: string | number
+      text?: string
+      kind?: string
+      lodging?: boolean
+      mapQuery?: string
+      mapQueryTo?: string
+    }>
   }>
   memories: Array<{
     id: string
@@ -42,6 +49,10 @@ type Props = {
   onLocateMiss?: () => void
   onRevealItinerary?: (opts: { dayId?: string; activityId?: string }) => void
   onLocatableIds?: (ids: string[]) => void
+}
+
+function normNoteKey(q: string) {
+  return q.trim().toLowerCase().replace(/\s+/g, " ")
 }
 
 const MAP_MAX_ZOOM = 18
@@ -78,6 +89,7 @@ function popupOpts(
     title: stop.label,
     localLabel: stop.localLabel,
     dayLabel: stop.dayLabel,
+    activityTime: stop.activityTime,
     activitySnippet: stop.activitySnippet,
     kind: stop.kind,
     note,
@@ -301,6 +313,33 @@ export function PlanRouteMap({
         .addTo(layer)
     }
 
+    // From → To corridor hints (dashed straight; live routing is a follow-up)
+    for (const day of itinerary || []) {
+      for (const act of day.activities || []) {
+        const fromQ = (act.mapQuery || "").trim()
+        const toQ = (act.mapQueryTo || "").trim()
+        if (!fromQ || !toQ) continue
+        const aid = String(act.id)
+        const fromKey = normNoteKey(fromQ)
+        const toKey = normNoteKey(toQ)
+        const fromStop = stops.find((s) => s.activityIds.includes(aid) && s.noteKey === fromKey)
+        const toStop = stops.find((s) => s.activityIds.includes(aid) && s.noteKey === toKey)
+        if (!fromStop || !toStop) continue
+        L.polyline(
+          [
+            [fromStop.lat, fromStop.lng],
+            [toStop.lat, toStop.lng],
+          ],
+          {
+            color: "#C48A3A",
+            weight: 2.5,
+            opacity: 0.75,
+            dashArray: "6 8",
+          },
+        ).addTo(layer)
+      }
+    }
+
     for (const stop of stops) {
       const color = stopColor(stop.kind)
       const note = getPlaceNote(stop.noteKey)
@@ -346,7 +385,7 @@ export function PlanRouteMap({
     }
     skipNextFit.current = false
     setTimeout(() => map.invalidateSize(), 80)
-  }, [stops, showHikes, notesTick])
+  }, [stops, showHikes, notesTick, itinerary])
 
   useEffect(() => {
     if (focusActivityId == null || focusActivityId === "") return

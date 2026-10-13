@@ -3,13 +3,13 @@ import { IconCamera, IconExpense, IconMap } from "./Icons"
 
 export function SwipeableActivity({
   act,
-  dayId,
+  dayId: _dayId,
   onToggle,
   onDelete,
   onExpense,
   onMemory,
   onLocate,
-  isFirst,
+  isFirst: _isFirst,
   flash,
 }) {
   const THRESHOLD = 72 // px to trigger action
@@ -154,47 +154,29 @@ export function SwipeableActivity({
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
       >
-        {/* Status dot */}
-        <div
-          className={`swipe-status-dot${isDone ? " done" : ""}`}
-          style={{ cursor: "pointer" }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onToggle()
-          }}
-        >
-          {isDone && "✓"}
-        </div>
-
-        {/* Text — tap toggles done; locate is the map icon */}
+        {/* Text — tap opens map when locatable; complete via swipe only */}
         <span
-          className={`swipe-act-text${isDone ? " done" : ""}`}
+          className={`swipe-act-text${isDone ? " done" : ""}${onLocate ? " locatable" : ""}`}
           onClick={(e) => {
             e.stopPropagation()
             if (touch.current.swiped || Math.abs(dx) > MIN_INTENT) return
-            onToggle()
+            if (onLocate) onLocate()
           }}
         >
+          {act.time ? <span className="swipe-act-time">{act.time}</span> : null}
           {act.text}
+          {onLocate ? (
+            <span className="swipe-act-pin" aria-hidden="true">
+              <IconMap size={12} />
+            </span>
+          ) : null}
         </span>
 
-        {/* Quick actions — only visible when not swiping */}
+        {/* Quick actions — map via text tap; keep expense/memory */}
         <div
           className="act-quick-btns"
           style={{ opacity: Math.max(0, 1 - Math.abs(dx) / 30), flexShrink: 0 }}
         >
-          {onLocate && (
-            <div
-              className="act-q-btn"
-              title="Show on map"
-              onClick={(e) => {
-                e.stopPropagation()
-                onLocate()
-              }}
-            >
-              <IconMap size={16} />
-            </div>
-          )}
           {onExpense && (
             <div
               className="act-q-btn"
@@ -224,5 +206,3 @@ export function SwipeableActivity({
     </div>
   )
 }
-
-/* ── DASHBOARD ────────────────────────────────────────────────────────────── */

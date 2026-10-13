@@ -699,7 +699,7 @@ Rules:
           style={{
             textAlign: "right",
             fontSize: 11,
-            color: "rgba(230,217,194,0.35)",
+            color: "var(--text-faint)",
             marginTop: 5,
           }}
         >
@@ -952,7 +952,7 @@ Rules:
             style={{
               textAlign: "center",
               fontSize: 11,
-              color: "rgba(230,217,194,0.3)",
+              color: "var(--text-faint)",
               marginTop: 6,
             }}
           >
@@ -1104,13 +1104,11 @@ Rules:
                 >
                   {cat}
                 </span>
-                <span style={{ fontSize: 11, color: "rgba(230,217,194,0.35)" }}>
+                <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
                   {catDone}/{items.length}
                 </span>
               </div>
-              <span style={{ color: "rgba(230,217,194,0.3)", fontSize: 11 }}>
-                {isCol ? "▼" : "▲"}
-              </span>
+              <span style={{ color: "var(--text-faint)", fontSize: 11 }}>{isCol ? "▼" : "▲"}</span>
             </div>
             {!isCol && (
               <>

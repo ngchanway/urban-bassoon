@@ -753,7 +753,7 @@ Provide the current visa and entry requirements.`,
                   <div
                     style={{
                       fontSize: 13,
-                      color: "rgba(230,217,194,.75)",
+                      color: "var(--text-dim)",
                       marginBottom: 12,
                       padding: "10px 12px",
                       background: "rgba(255,255,255,.03)",
@@ -1335,7 +1335,7 @@ Provide the current visa and entry requirements.`,
               fontSize: 20,
               display: "flex",
               alignItems: "center",
-              color: "rgba(230,217,194,0.3)",
+              color: "var(--text-faint)",
               flexShrink: 0,
             }}
           >
@@ -1365,7 +1365,7 @@ Provide the current visa and entry requirements.`,
         </div>
         {currResult !== null && (
           <div style={{ textAlign: "center", marginTop: 14, fontFamily: "'DM Sans',sans-serif" }}>
-            <span style={{ fontSize: 13, color: "rgba(230,217,194,0.45)" }}>
+            <span style={{ fontSize: 13, color: "var(--text-faint)" }}>
               {currAmount} {currFrom} =
             </span>
             <div style={{ fontSize: 30, color: "var(--amber)", fontWeight: 700 }}>

@@ -16,6 +16,8 @@ export type PlanStop = {
   offlineEligible: boolean
   noteKey: string
   activitySnippet?: string
+  /** Structured activity clock time (HH:mm), not parsed from text */
+  activityTime?: string
   activityIds: string[]
 }
 
@@ -23,7 +25,15 @@ type TripLike = { destination?: string }
 type DayLike = {
   id: string
   label?: string
-  activities?: Array<{ id: string | number; text?: string; kind?: string; lodging?: boolean }>
+  activities?: Array<{
+    id: string | number
+    text?: string
+    kind?: string
+    lodging?: boolean
+    mapQuery?: string
+    mapQueryTo?: string
+    time?: string
+  }>
 }
 type MemoryLike = {
   id: string
@@ -105,8 +115,14 @@ type PlaceQuery = {
   dayLabel?: string
   offlineEligible: boolean
   activitySnippet?: string
+  activityTime?: string
   activityIds: string[]
   priority: "core" | "secondary"
+}
+
+function activityClock(act: { time?: string }): string | undefined {
+  const t = (act.time || "").trim()
+  return t || undefined
 }
 
 export type ExtractResult = {
@@ -164,7 +180,10 @@ export function extractPlaceQueries(
   const push = (pq: PlaceQuery) => {
     const q = pq.query.trim()
     if (!q) return
-    if (pq.kind === "stay") {
+    const explicitMap = String(pq.id || "").startsWith("mq-")
+    if (explicitMap) {
+      if (q.length < 2) return
+    } else if (pq.kind === "stay") {
       if (q.length < 2) return
     } else if (
       pq.kind !== "hub" &&
@@ -181,6 +200,9 @@ export function extractPlaceQueries(
       if (!existing.dayLabel && pq.dayLabel) existing.dayLabel = pq.dayLabel
       if (!existing.activitySnippet && pq.activitySnippet) {
         existing.activitySnippet = pq.activitySnippet
+      }
+      if (!existing.activityTime && pq.activityTime) {
+        existing.activityTime = pq.activityTime
       }
       // Promote priority if core
       if (pq.priority === "core") existing.priority = "core"
@@ -203,10 +225,54 @@ export function extractPlaceQueries(
     })
   }
 
-  // Core: all stays
+  // Explicit mapQuery / mapQueryTo — prefer over noisy text parsing
   for (const day of itinerary || []) {
     const dayLabel = day.label || ""
     for (const act of day.activities || []) {
+      const mq = (act.mapQuery || "").trim()
+      const mqTo = (act.mapQueryTo || "").trim()
+      if (!mq && !mqTo) continue
+      const t = (act.text || "").trim()
+      const snippet = t.length > 80 ? `${t.slice(0, 77)}…` : t
+      const clock = activityClock(act)
+      const kind = isStayAct(act) ? "stay" : isTransitAct(act) ? "transit" : "activity"
+      const priority = kind === "activity" ? "secondary" : "core"
+      if (mq) {
+        push({
+          query: mq,
+          kind,
+          id: `mq-${actId(act.id)}-from`,
+          dayId: day.id,
+          dayLabel,
+          offlineEligible: true,
+          activitySnippet: snippet,
+          activityTime: clock,
+          activityIds: [actId(act.id)],
+          priority,
+        })
+      }
+      if (mqTo) {
+        push({
+          query: mqTo,
+          kind: kind === "stay" ? "activity" : kind,
+          id: `mq-${actId(act.id)}-to`,
+          dayId: day.id,
+          dayLabel,
+          offlineEligible: true,
+          activitySnippet: snippet,
+          activityTime: clock,
+          activityIds: [actId(act.id)],
+          priority,
+        })
+      }
+    }
+  }
+
+  // Core: all stays (skip if mapQuery already set)
+  for (const day of itinerary || []) {
+    const dayLabel = day.label || ""
+    for (const act of day.activities || []) {
+      if ((act.mapQuery || "").trim()) continue
       if (!isStayAct(act)) continue
       const t = (act.text || "").trim()
       if (!t) continue
@@ -220,16 +286,18 @@ export function extractPlaceQueries(
         dayLabel,
         offlineEligible: true,
         activitySnippet: t.length > 80 ? `${t.slice(0, 77)}…` : t,
+        activityTime: activityClock(act),
         activityIds: [actId(act.id)],
         priority: "core",
       })
     }
   }
 
-  // Core: all transit hubs
+  // Core: all transit hubs (skip if mapQuery already set)
   for (const day of itinerary || []) {
     const dayLabel = day.label || ""
     for (const act of day.activities || []) {
+      if ((act.mapQuery || "").trim()) continue
       if (!isTransitAct(act)) continue
       const t = (act.text || "").trim()
       if (!t) continue
@@ -238,6 +306,7 @@ export function extractPlaceQueries(
         t.includes("→") && parts.length >= 2
           ? [parts[parts.length - 1], ...parts.slice(0, -1)]
           : parts
+      const clock = activityClock(act)
       for (let i = 0; i < sides.length; i++) {
         const part = sides[i]
         if (hubKey && normKey(part) === hubKey) continue
@@ -250,6 +319,7 @@ export function extractPlaceQueries(
           dayLabel,
           offlineEligible: true,
           activitySnippet: t.length > 80 ? `${t.slice(0, 77)}…` : t,
+          activityTime: clock,
           activityIds: [actId(act.id)],
           priority: "core",
         })
@@ -296,11 +366,13 @@ export function extractPlaceQueries(
   for (const day of itinerary || []) {
     const dayLabel = day.label || ""
     for (const act of day.activities || []) {
+      if ((act.mapQuery || "").trim()) continue
       if (isStayAct(act) || isTransitAct(act)) continue
       const t = (act.text || "").trim()
       if (!t) continue
       const parts = splitPlaces(t)
       const prefer = t.includes("→") && parts.length >= 2 ? parts.slice(1) : parts
+      const clock = activityClock(act)
       for (const part of prefer) {
         if (hubKey && normKey(part) === hubKey) continue
         pushSecondary({
@@ -311,6 +383,7 @@ export function extractPlaceQueries(
           dayLabel,
           offlineEligible: true,
           activitySnippet: t.length > 80 ? `${t.slice(0, 77)}…` : t,
+          activityTime: clock,
           activityIds: [actId(act.id)],
           priority: "secondary",
         })
@@ -344,6 +417,7 @@ function toStop(pq: PlaceQuery, hit: GeoHit): PlanStop {
     offlineEligible: pq.offlineEligible,
     noteKey: normKey(pq.query),
     activitySnippet: pq.activitySnippet,
+    activityTime: pq.activityTime,
     activityIds: [...pq.activityIds],
   }
 }
@@ -397,6 +471,10 @@ export async function resolvePlanStops(
     if (existing) {
       for (const id of p.activityIds) {
         if (!existing.activityIds.includes(id)) existing.activityIds.push(id)
+      }
+      if (!existing.activityTime && p.activityTime) existing.activityTime = p.activityTime
+      if (!existing.activitySnippet && p.activitySnippet) {
+        existing.activitySnippet = p.activitySnippet
       }
       emit()
       continue

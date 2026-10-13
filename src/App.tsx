@@ -21,6 +21,7 @@ import { MemoriesTab } from "./components/tabs/MemoriesTab"
 import { PackTab } from "./components/tabs/PackTab"
 import { PlanTab } from "./components/tabs/PlanTab"
 import { callAi } from "./lib/ai"
+import { addDays } from "./lib/calendar"
 import { COUNTRY_CURRENCY, CURRENCIES, EXPENSE_CATS, WC_ICON, countryFlag } from "./lib/constants"
 import {
   DEMO_LOADED_KEY,
@@ -35,6 +36,7 @@ import {
 import { generateExportHTML } from "./lib/export"
 import { LS } from "./lib/storage"
 import { mergeById, mergeItinerary, mergePacking, mergePeople } from "./lib/sync"
+import { HASH_TABS, TAB, type TabId } from "./lib/tabs"
 import {
   buildDefaultPacking,
   isTripEmpty,
@@ -44,8 +46,6 @@ import {
 } from "./lib/trip"
 
 const JSONBLOB = "https://jsonblob.com/api/jsonBlob"
-
-const HASH_TABS = { home: 0, plan: 1, pack: 2, budget: 3, explore: 4, memories: 5, docs: 6 }
 
 /** Sync LS + document chrome before first React paint when ?demo=nakasendo */
 function bootstrapJapanNaviDemo() {
@@ -123,7 +123,7 @@ const japanNaviDemoActive = bootstrapJapanNaviDemo()
 if (!japanNaviDemoActive) bootstrapPersonalTrip()
 
 export default function App() {
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState<TabId>(TAB.home)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [installPrompt, setInstallPrompt] = useState(null)
   const [showInstall, setShowInstall] = useState(false)
@@ -690,7 +690,7 @@ export default function App() {
     setActiveTripId(newId)
     LS.set("tc_active_trip", newId)
     setShowDrawer(false)
-    setTab(0) // return to dashboard on switch
+    setTab(TAB.home)
   }
 
   const createTrip = () => {
@@ -713,7 +713,7 @@ export default function App() {
     setActiveTripId(newId)
     LS.set("tc_active_trip", newId)
     setShowDrawer(false)
-    setTab(1)
+    setTab(TAB.plan)
   }
 
   const deleteTrip = (id) => {
@@ -902,25 +902,61 @@ export default function App() {
         label: rest && !/^Day\s+\d+$/i.test(rest) ? `Day ${n} · ${rest}` : `Day ${n}`,
       }
     })
+  const isoFromOffset = (startDate: string, offsetDays: number) => {
+    const d = addDays(startDate, offsetDays)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    return `${y}-${m}-${day}`
+  }
+
+  const syncEndDateToDayCount = (dayCount: number, baseTrip = trip) => {
+    if (!baseTrip.startDate) return
+    if (dayCount <= 0) {
+      saveTrip({ ...baseTrip, endDate: "" })
+      return
+    }
+    saveTrip({ ...baseTrip, endDate: isoFromOffset(baseTrip.startDate, dayCount - 1) })
+  }
+
   const addDay = () => {
     const n = itinerary.length + 1
-    saveItinerary([...itinerary, { id: Date.now(), day: n, label: `Day ${n}`, activities: [] }])
+    const next = [...itinerary, { id: Date.now(), day: n, label: `Day ${n}`, activities: [] }]
+    saveItinerary(next)
+    syncEndDateToDayCount(next.length)
   }
-  const insertDay = (index) => {
-    const i = Math.max(0, Math.min(Number(index) || 0, itinerary.length))
-    const next = [...itinerary]
-    next.splice(i, 0, { id: Date.now(), day: i + 1, label: `Day ${i + 1}`, activities: [] })
-    saveItinerary(renumberDays(next))
+  const removeDay = (id) => {
+    const next = renumberDays(itinerary.filter((d) => d.id !== id))
+    saveItinerary(next)
+    syncEndDateToDayCount(next.length)
   }
-  const removeDay = (id) => saveItinerary(renumberDays(itinerary.filter((d) => d.id !== id)))
-  const addActivity = (dayId, text) =>
+  const addActivity = (dayId, payload) => {
+    const text = typeof payload === "string" ? payload : payload?.text
+    if (!String(text || "").trim()) return
+    const mapQuery =
+      typeof payload === "object" && payload?.mapQuery ? String(payload.mapQuery).trim() : ""
+    const mapQueryTo =
+      typeof payload === "object" && payload?.mapQueryTo ? String(payload.mapQueryTo).trim() : ""
+    const time = typeof payload === "object" && payload?.time ? String(payload.time).trim() : ""
+    const act: {
+      id: number
+      text: string
+      done: boolean
+      mapQuery?: string
+      mapQueryTo?: string
+      time?: string
+    } = {
+      id: Date.now(),
+      text: String(text).trim(),
+      done: false,
+    }
+    if (mapQuery) act.mapQuery = mapQuery
+    if (mapQueryTo) act.mapQueryTo = mapQueryTo
+    if (time) act.time = time
     saveItinerary(
-      itinerary.map((d) =>
-        d.id === dayId
-          ? { ...d, activities: [...d.activities, { id: Date.now(), text, done: false }] }
-          : d,
-      ),
+      itinerary.map((d) => (d.id === dayId ? { ...d, activities: [...d.activities, act] } : d)),
     )
+  }
   const toggleActivity = (dayId, actId) =>
     saveItinerary(
       itinerary.map((d) =>
@@ -938,6 +974,40 @@ export default function App() {
         d.id === dayId ? { ...d, activities: d.activities.filter((a) => a.id !== actId) } : d,
       ),
     )
+
+  // Keep itinerary day count aligned with Home trip-strip dates (pad / trim empty only)
+  useEffect(() => {
+    if (!trip.startDate || !trip.endDate) return
+    const span =
+      Math.round(
+        (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / 86400000,
+      ) + 1
+    if (span < 1) return
+    if (itinerary.length < span) {
+      const next = [...itinerary]
+      while (next.length < span) {
+        const n = next.length + 1
+        next.push({
+          id: Date.now() + n,
+          day: n,
+          label: `Day ${n}`,
+          activities: [],
+        })
+      }
+      saveItinerary(renumberDays(next))
+      return
+    }
+    if (itinerary.length > span) {
+      const next = [...itinerary]
+      while (next.length > span) {
+        const last = next[next.length - 1]
+        if ((last.activities || []).length > 0) break
+        next.pop()
+      }
+      if (next.length !== itinerary.length) saveItinerary(renumberDays(next))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync on date span only
+  }, [trip.startDate, trip.endDate])
 
   // ── Packing ──
   const togglePacking = (cat, id) =>
@@ -1101,7 +1171,7 @@ export default function App() {
   // ── Quick Memory (from activity) ──
   const onQuickMemory = (act, day) => {
     setQuickMemoryCtx({ act, day })
-    setTab(5) // navigate to Memories tab — map handles pre-filling
+    setTab(TAB.memories)
   }
 
   const flash = (msg) => {
@@ -1110,7 +1180,7 @@ export default function App() {
   }
 
   // ── Navigate ──
-  const navigateTo = (dest) => {
+  const navigateTo = (dest: TabId | "share") => {
     if (dest === "share") {
       setShowShare(true)
       return
@@ -1129,10 +1199,10 @@ export default function App() {
         .join("  ·  ") || "Where are you headed?"
 
   const TABS = [
-    { label: "Home", icon: <IconHome size={20} /> },
     { label: "Plan", icon: <IconPlan size={20} /> },
     { label: "Pack", icon: <IconPack size={20} /> },
     { label: "Budget", icon: <IconBudget size={20} /> },
+    { label: "Home", icon: <IconHome size={20} /> },
     { label: "Explore", icon: <IconExplore size={20} /> },
     { label: "Memories", icon: <IconMemories size={20} /> },
     { label: "Docs", icon: <IconDocs size={20} /> },
@@ -1260,13 +1330,13 @@ export default function App() {
             </button>
           </div>
         </div>
-        {tab !== 1 && <div className="header-sub">{subtitle}</div>}
+        {tab !== TAB.plan && <div className="header-sub">{subtitle}</div>}
       </div>
 
       {/* Content */}
       <div className="content">
         <div className="content-inner">
-          {tab === 0 && (
+          {tab === TAB.home && (
             <Dashboard
               key={activeTripId}
               trip={trip}
@@ -1291,13 +1361,12 @@ export default function App() {
               routeBanner={demoMode ? ROUTE_BANNER : ""}
             />
           )}
-          {tab === 1 && (
+          {tab === TAB.plan && (
             <PlanTab
               trip={trip}
               saveTrip={saveTrip}
               itinerary={itinerary}
               addDay={addDay}
-              insertDay={insertDay}
               addActivity={addActivity}
               toggleActivity={toggleActivity}
               removeDay={removeDay}
@@ -1311,7 +1380,7 @@ export default function App() {
               activeTripId={activeTripId}
             />
           )}
-          {tab === 2 && (
+          {tab === TAB.pack && (
             <PackTab
               packing={packing}
               togglePacking={togglePacking}
@@ -1323,7 +1392,7 @@ export default function App() {
               itinerary={itinerary}
             />
           )}
-          {tab === 3 && (
+          {tab === TAB.budget && (
             <BudgetTab
               totalBudget={totalBudget}
               saveBudget={saveBudget}
@@ -1345,7 +1414,7 @@ export default function App() {
               onDetectNow={() => detectLocationCurrency(true)}
             />
           )}
-          {tab === 4 && (
+          {tab === TAB.explore && (
             <ExploreTab
               trip={trip}
               itinerary={itinerary}
@@ -1369,7 +1438,7 @@ export default function App() {
               getAiTip={getAiTip}
             />
           )}
-          {tab === 5 && (
+          {tab === TAB.memories && (
             <MemoriesTab
               memories={memories}
               addMemory={addMemory}
@@ -1380,7 +1449,7 @@ export default function App() {
               clearQuickMemory={() => setQuickMemoryCtx(null)}
             />
           )}
-          {tab === 6 && (
+          {tab === TAB.docs && (
             <DocsTab
               docs={docs}
               saveDocs={saveDocs}
@@ -1404,7 +1473,7 @@ export default function App() {
           <button
             key={i}
             className={`tab-btn${tab === i ? " active" : ""}`}
-            onClick={() => setTab(i)}
+            onClick={() => setTab(i as TabId)}
           >
             <span className="tab-icon">{t.icon}</span>
             <span className="tab-label">{t.label}</span>

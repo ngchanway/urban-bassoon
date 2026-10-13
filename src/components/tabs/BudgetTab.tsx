@@ -458,7 +458,7 @@ If you can't read a field clearly, make your best inference and lower confidence
             display: "flex",
             justifyContent: "space-between",
             fontSize: 11,
-            color: "rgba(230,217,194,0.35)",
+            color: "var(--text-faint)",
           }}
         >
           <span>{pct}% used</span>
@@ -526,7 +526,7 @@ If you can't read a field clearly, make your best inference and lower confidence
               border: "none",
               cursor: "pointer",
               background: activeTab === id ? "var(--amber)" : "rgba(255,255,255,0.05)",
-              color: activeTab === id ? "#07101F" : "rgba(230,217,194,0.5)",
+              color: activeTab === id ? "#07101F" : "var(--text-faint)",
               transition: "all 0.15s",
             }}
           >

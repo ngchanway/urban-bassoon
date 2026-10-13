@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react"
-import {
-  addDays,
-  downloadICS,
-  gcalDayUrl,
-  generateDayICS,
-  generateICS,
-  outlookDayUrl,
-} from "../../lib/calendar"
+import { addDays, downloadICS, generateDayICS, generateICS } from "../../lib/calendar"
+import { TAB } from "../../lib/tabs"
+import { IconExternalLink } from "../shared/Icons"
 import { SwipeableActivity } from "../shared/SwipeableActivity"
 import { PlanRouteMap } from "./PlanRouteMap"
 
@@ -15,7 +10,6 @@ export function PlanTab({
   saveTrip,
   itinerary,
   addDay,
-  insertDay,
   addActivity,
   toggleActivity,
   removeDay,
@@ -29,13 +23,16 @@ export function PlanTab({
   activeTripId,
 }) {
   const tripComplete = Boolean(trip.destination && trip.startDate && trip.endDate)
-  const [newActs, setNewActs] = useState({})
   const [showCal, setShowCal] = useState(false)
   const [focusActivityId, setFocusActivityId] = useState(null)
   const [locatableIds, setLocatableIds] = useState(() => new Set())
   const [locateHint, setLocateHint] = useState("")
   const [flashId, setFlashId] = useState(null)
   const [expandedDayId, setExpandedDayId] = useState(() => itinerary[0]?.id ?? null)
+  const [addSheet, setAddSheet] = useState(null) // { day }
+  const [addMode, setAddMode] = useState("single") // single | fromto
+  const [addForm, setAddForm] = useState({ place: "", from: "", to: "", detail: "", time: "" })
+
   const tripDays =
     trip.startDate && trip.endDate
       ? Math.max(
@@ -56,11 +53,38 @@ export function PlanTab({
     )
   }, [itinerary])
 
-  const handleAdd = (dayId) => {
-    const t = (newActs[dayId] || "").trim()
-    if (!t) return
-    addActivity(dayId, t)
-    setNewActs((p) => ({ ...p, [dayId]: "" }))
+  const openAddSheet = (day) => {
+    setAddSheet({ day })
+    setAddMode("single")
+    setAddForm({ place: "", from: "", to: "", detail: "", time: "" })
+  }
+
+  const submitAddActivity = () => {
+    if (!addSheet?.day) return
+    const detail = addForm.detail.trim()
+    const time = addForm.time.trim()
+    if (addMode === "fromto") {
+      const from = addForm.from.trim()
+      const to = addForm.to.trim()
+      if (!from || !to) return
+      const text = detail ? `${from} → ${to} · ${detail}` : `${from} → ${to}`
+      addActivity(addSheet.day.id, {
+        text,
+        mapQuery: from,
+        mapQueryTo: to,
+        ...(time ? { time } : {}),
+      })
+    } else {
+      const place = addForm.place.trim()
+      if (!place) return
+      const text = detail ? `${place} · ${detail}` : place
+      addActivity(addSheet.day.id, {
+        text,
+        mapQuery: place,
+        ...(time ? { time } : {}),
+      })
+    }
+    setAddSheet(null)
   }
 
   const daySpend = (day) =>
@@ -116,6 +140,11 @@ export function PlanTab({
   const tripSlug = (trip.name || "trip").replace(/\s+/g, "-")
   const icsStr = () => generateICS({ trip, itinerary })
 
+  const canSaveAdd =
+    addMode === "fromto"
+      ? Boolean(addForm.from.trim() && addForm.to.trim())
+      : Boolean(addForm.place.trim())
+
   const tripBlock = showTripForm ? (
     <div className="plan-trip-details">
       <div className="card-title" style={{ marginBottom: 8 }}>
@@ -152,7 +181,7 @@ export function PlanTab({
           <div
             style={{
               fontSize: 12,
-              color: "rgba(230,217,194,0.45)",
+              color: "var(--text-faint)",
               display: "flex",
               gap: 12,
               flexWrap: "wrap",
@@ -232,8 +261,6 @@ export function PlanTab({
                     <div className="cal-event-preview-title">Add one day</div>
                     {itinerary.map((day, idx) => {
                       if (!day.activities.length) return null
-                      const gc = gcalDayUrl(day, idx, trip)
-                      const ol = outlookDayUrl(day, idx, trip)
                       const d = addDays(trip.startDate, idx)
                       const dateLabel = d.toLocaleDateString("en", {
                         weekday: "short",
@@ -248,26 +275,6 @@ export function PlanTab({
                             {day.activities.length !== 1 ? "s" : ""}
                           </div>
                           <div className="cal-preview-chips">
-                            {gc && (
-                              <a
-                                href={gc}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="cal-chip cal-chip-google"
-                              >
-                                Google
-                              </a>
-                            )}
-                            {ol && (
-                              <a
-                                href={ol}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="cal-chip cal-chip-outlook"
-                              >
-                                Outlook
-                              </a>
-                            )}
                             <button
                               type="button"
                               className="cal-chip cal-chip-ics"
@@ -310,19 +317,6 @@ export function PlanTab({
                   : `${day.activities.length} activit${day.activities.length === 1 ? "y" : "ies"}`
             return (
               <div key={day.id} className="plan-day-wrap">
-                {dayIdx > 0 && (
-                  <button
-                    type="button"
-                    className="plan-insert-day"
-                    onClick={() => insertDay?.(dayIdx)}
-                    aria-label="Insert day"
-                    title="Insert day"
-                  >
-                    <span className="plan-day-plus" aria-hidden="true">
-                      +
-                    </span>
-                  </button>
-                )}
                 <div
                   id={`itin-day-${day.id}`}
                   className={`day-card${expanded ? "" : " collapsed"}${flashId === `itin-day-${day.id}` ? " itin-flash" : ""}`}
@@ -353,7 +347,7 @@ export function PlanTab({
                     </button>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       {ds > 0 && (
-                        <span className="linked-badge" onClick={() => navigateTo(3)}>
+                        <span className="linked-badge" onClick={() => navigateTo(TAB.budget)}>
                           💰 {baseCurrency} {ds.toFixed(0)}
                         </span>
                       )}
@@ -365,7 +359,7 @@ export function PlanTab({
                             borderColor: "var(--amber-dim)",
                             color: "var(--amber)",
                           }}
-                          onClick={() => navigateTo(5)}
+                          onClick={() => navigateTo(TAB.memories)}
                         >
                           📸 {dm}
                         </span>
@@ -376,6 +370,38 @@ export function PlanTab({
                     </div>
                   </div>
                   <div className="day-body">
+                    {Array.isArray(day.guide?.bullets) && day.guide.bullets.length > 0 && (
+                      <div className="day-field-guide">
+                        {day.guide.title && (
+                          <div className="day-field-guide-title">{day.guide.title}</div>
+                        )}
+                        <ul className="day-field-guide-list">
+                          {day.guide.bullets.map((b) => (
+                            <li key={`${b.label}-${b.text.slice(0, 24)}`}>
+                              <span className="day-field-guide-label">{b.label}</span>
+                              <span className="day-field-guide-text">
+                                {b.text}
+                                {b.url ? (
+                                  <>
+                                    {" "}
+                                    <a
+                                      className="day-field-guide-link"
+                                      href={b.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label="Open article"
+                                      title="Open article"
+                                    >
+                                      <IconExternalLink size={14} />
+                                    </a>
+                                  </>
+                                ) : null}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     {day.activities.map((act, i) => (
                       <SwipeableActivity
                         key={act.id}
@@ -394,26 +420,16 @@ export function PlanTab({
                         flash={flashId === `itin-act-${act.id}`}
                       />
                     ))}
-                    {day.activities.length === 0 ? (
-                      <div className="swipe-hint" style={{ textAlign: "left", paddingLeft: 2 }}>
-                        Add activities below
-                      </div>
-                    ) : (
+                    {expanded && day.activities.length > 0 && (
                       <div className="swipe-hint">← swipe to delete · swipe to complete →</div>
                     )}
-                    <div className="flex gap-8 mt-8">
-                      <input
-                        className="input flex-1"
-                        style={{ padding: "7px 11px", fontSize: 12 }}
-                        placeholder="Add activity…"
-                        value={newActs[day.id] || ""}
-                        onChange={(e) => setNewActs((p) => ({ ...p, [day.id]: e.target.value }))}
-                        onKeyDown={(e) => e.key === "Enter" && handleAdd(day.id)}
-                      />
-                      <button className="btn-ghost" onClick={() => handleAdd(day.id)}>
-                        Add
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="btn-ghost plan-add-activity-btn"
+                      onClick={() => openAddSheet(day)}
+                    >
+                      Add activity
+                    </button>
                   </div>
                 </div>
               </div>
@@ -435,6 +451,96 @@ export function PlanTab({
           </button>
         </div>
       </div>
+
+      {addSheet && (
+        <div
+          className="pin-form-overlay"
+          onClick={(e) => e.target === e.currentTarget && setAddSheet(null)}
+        >
+          <div className="pin-form">
+            <div className="pin-form-title">Add activity</div>
+            <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 12 }}>
+              {addSheet.day.label}
+            </div>
+            <div className="plan-add-mode" role="tablist" aria-label="Place mode">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={addMode === "single"}
+                className={`plan-add-mode-btn${addMode === "single" ? " active" : ""}`}
+                onClick={() => setAddMode("single")}
+              >
+                One place
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={addMode === "fromto"}
+                className={`plan-add-mode-btn${addMode === "fromto" ? " active" : ""}`}
+                onClick={() => setAddMode("fromto")}
+              >
+                From → To
+              </button>
+            </div>
+            <div className="flex flex-col gap-8" style={{ marginTop: 10 }}>
+              {addMode === "single" ? (
+                <input
+                  className="input"
+                  placeholder="Place (for map)"
+                  value={addForm.place}
+                  onChange={(e) => setAddForm((f) => ({ ...f, place: e.target.value }))}
+                />
+              ) : (
+                <>
+                  <input
+                    className="input"
+                    placeholder="From"
+                    value={addForm.from}
+                    onChange={(e) => setAddForm((f) => ({ ...f, from: e.target.value }))}
+                  />
+                  <input
+                    className="input"
+                    placeholder="To"
+                    value={addForm.to}
+                    onChange={(e) => setAddForm((f) => ({ ...f, to: e.target.value }))}
+                  />
+                </>
+              )}
+              <input
+                className="input"
+                placeholder="Detail (optional)"
+                value={addForm.detail}
+                onChange={(e) => setAddForm((f) => ({ ...f, detail: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && canSaveAdd && submitAddActivity()}
+              />
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Time (optional)
+                </div>
+                <input
+                  className="input"
+                  type="time"
+                  value={addForm.time}
+                  onChange={(e) => setAddForm((f) => ({ ...f, time: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex gap-8 mt-12">
+              <button type="button" className="btn-ghost flex-1" onClick={() => setAddSheet(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn flex-1"
+                onClick={submitAddActivity}
+                disabled={!canSaveAdd}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

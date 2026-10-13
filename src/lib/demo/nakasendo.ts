@@ -117,70 +117,95 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
     text: "Changi is consistently ranked among the world’s best airports — Jewel’s indoor waterfall and gardens make a long layover feel like a mini outing.",
     caution:
       "Leave buffer for security and immigration on early departures; follow airline bag rules for liquids and power banks.",
+    moreUrl: "https://en.wikipedia.org/wiki/Changi_Airport",
   },
   singapore: {
     text: "Changi is consistently ranked among the world’s best airports — Jewel’s indoor waterfall and gardens make a long layover feel like a mini outing.",
     caution:
       "Leave buffer for security and immigration on early departures; follow airline bag rules for liquids and power banks.",
+    moreUrl: "https://en.wikipedia.org/wiki/Changi_Airport",
   },
   narita: {
     text: "Narita Airport sits in Chiba, a train or bus ride from central Tokyo. It opened in 1978 and remains a major international gateway.",
     caution:
       "Budget 60–90 minutes into Shinjuku by train; late-night options thin out after the last limited express.",
+    moreUrl: "https://en.wikipedia.org/wiki/Narita_International_Airport",
   },
   "narita airport": {
     text: "Narita Airport sits in Chiba, a train or bus ride from central Tokyo. It opened in 1978 and remains a major international gateway.",
     caution:
       "Budget 60–90 minutes into Shinjuku by train; late-night options thin out after the last limited express.",
+    moreUrl: "https://en.wikipedia.org/wiki/Narita_International_Airport",
   },
   shinjuku: {
-    text: "Shinjuku is Tokyo’s transit powerhouse — the station handles millions of passengers a day, with neon alleys and skyscraper views side by side.",
+    text: "Shinjuku (“New Inn”) began as the last post town before Edo’s palace. Today it is Tokyo’s transit powerhouse — neon alleys beside skyscraper views.",
     caution:
       "The station maze is real; follow color-coded exits and allow extra time with luggage.",
+    moreUrl: "https://en.wikipedia.org/wiki/Shinjuku",
+  },
+  "shinjuku gyoen": {
+    text: "Shinjuku Gyoen was once a daimyo estate tied to Nakasendo travelers — now a national garden with Japanese, French, and English landscapes.",
+    caution: "Entry closes earlier in winter; check last admission before a late stroll.",
+    moreUrl: "https://en.wikipedia.org/wiki/Shinjuku_Gyoen",
   },
   nagoya: {
-    text: "Nagoya is the industrial heart of central Japan and a launchpad for the Kiso Valley. Castle and miso-katsu culture reward a short stop.",
+    text: "Seat of the Owari Tokugawa and birthplace of Nobunaga, Hideyoshi, and Ieyasu — Nagoya is the industrial heart of Chubu and your gateway to the Kiso Valley.",
     caution:
       "Highway buses can sell out on weekends — keep your Japan Navi booking confirmation handy.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nagoya",
   },
   nakatsugawa: {
-    text: "Nakatsugawa-juku was a prosperous post town on the Nakasendo, famous for chestnut sweets (kurikinton) and cedar-lined approaches.",
+    text: "Nakatsugawa was the 45th Nakasendo post town and a timber hub for the Kiso Valley. Late October is peak season for kurikinton (chestnut sweets).",
     caution:
-      "Rural paths can be dim after dusk; carry a light if you stroll beyond the main street.",
+      "Sun drops behind the mountains early (~4:45–5:00 PM); carry a light if you stroll beyond the main street after dusk.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nakatsugawa",
   },
   "nakatsugawa-juku": {
-    text: "Nakatsugawa-juku was a prosperous post town on the Nakasendo, famous for chestnut sweets (kurikinton) and cedar-lined approaches.",
+    text: "Nakatsugawa was the 45th Nakasendo post town and a timber hub for the Kiso Valley. Late October is peak season for kurikinton (chestnut sweets).",
     caution:
-      "Rural paths can be dim after dusk; carry a light if you stroll beyond the main street.",
+      "Sun drops behind the mountains early (~4:45–5:00 PM); carry a light if you stroll beyond the main street after dusk.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nakatsugawa",
   },
   magome: {
-    text: "Magome-juku clings to a steep cobbled street with wooden inns looking over the valley — one of the most photographed Nakasendo towns.",
+    text: "Magome-juku climbs a steep slope of wooden inns. Look for ishidatami (stone paving) built to keep the road from washing away in typhoons.",
     caution:
-      "Stone streets are slippery when wet; wear shoes with grip and mind your knees on the downhill toward Tsumago.",
+      "Stone streets are slippery when wet; wear shoes with grip and mind your knees on the downhill toward Tsumago. Aim to be off forested trail by 4:00 PM.",
     moreUrl: "https://en.wikipedia.org/wiki/Magome-juku",
   },
   tsumago: {
-    text: "Tsumago carefully preserves Edo-period streetscapes; overhead wires are hidden and cars are restricted so the post town feels timeless.",
+    text: "Tsumago hides power lines and vending machines off the main street to preserve an 18th-century feel. Odaki and Medaki falls appear in the novel Musashi.",
     caution:
-      "Respect no-photography signs at private inns; keep voices low in the evening residential lanes.",
+      "Respect no-photography signs at private inns; keep voices low in the evening residential lanes. Ring a bear bell at trailheads before forest sections.",
     moreUrl: "https://en.wikipedia.org/wiki/Tsumago-juku",
   },
+  "nezame-no-toko": {
+    text: "Nezame-no-toko’s white granite gorge was carved by the Kiso River. Legend places Urashima Taro here after the Dragon Palace — opening his forbidden box turned him old.",
+    caution: "Rock paths can be slick after rain; stay on marked viewpoints.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
+  },
+  nezame: {
+    text: "Nezame-no-toko’s white granite gorge was carved by the Kiso River. Legend places Urashima Taro here after the Dragon Palace — opening his forbidden box turned him old.",
+    caution: "Rock paths can be slick after rain; stay on marked viewpoints.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
+  },
   narai: {
-    text: "Narai-juku, “Narai of a thousand houses,” was the wealthiest Kiso post town, stretched along a long, graceful main street.",
+    text: "Narai (“of a Thousand Houses”) sat at ~900 m — the highest, wealthiest Kiso post town, where travelers prepared for Torii Pass. Look for family lacquerware (Kiso shikki) shops.",
     caution: "Torii Pass approaches involve climbs and weather shifts — pack layers and water.",
+    moreUrl: "https://en.wikipedia.org/wiki/Narai-juku",
   },
   "narai-juku": {
-    text: "Narai-juku, “Narai of a thousand houses,” was the wealthiest Kiso post town, stretched along a long, graceful main street.",
+    text: "Narai (“of a Thousand Houses”) sat at ~900 m — the highest, wealthiest Kiso post town, where travelers prepared for Torii Pass. Look for family lacquerware (Kiso shikki) shops.",
     caution: "Torii Pass approaches involve climbs and weather shifts — pack layers and water.",
+    moreUrl: "https://en.wikipedia.org/wiki/Narai-juku",
   },
   matsumoto: {
-    text: "Matsumoto Castle’s black-and-white keep is one of Japan’s oldest original castles, set against the Japanese Alps.",
+    text: "Matsumoto Castle is one of only five “original keeps” left in Japan — built for war, not show. The red-railed Moon Viewing Wing was added later for sake and moonlight.",
     caution:
       "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
     moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
   },
   "matsumoto castle": {
-    text: "Matsumoto Castle’s black-and-white keep is one of Japan’s oldest original castles, set against the Japanese Alps.",
+    text: "Matsumoto Castle is one of only five “original keeps” left in Japan — built for war, not show. The red-railed Moon Viewing Wing was added later for sake and moonlight.",
     caution:
       "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
     moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
@@ -189,40 +214,50 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
     text: "Haneda sits closer to central Tokyo than Narita and is a convenient international departure point after time in the city.",
     caution:
       "Confirm whether your flight uses Terminal 2 or 3; allow time for the monorail or airport bus with bags.",
+    moreUrl: "https://en.wikipedia.org/wiki/Haneda_Airport",
   },
   "torii pass": {
-    text: "Torii Pass links the Kiso post towns with forested climbs and shrine gates — classic Nakasendo scenery.",
+    text: "Named for the Shinto gate at the top. Clear days can reveal Mt. Ontake; watch for the “Stone of the Severed Head” (Kubitsuka) from a 16th-century Takeda–Kiso clash.",
     caution:
-      "Trails can be muddy after rain; watch for bears in remote sections and carry a bell if advised locally.",
+      "Trails can be muddy after rain; ring a bear bell before forest stretches and be off the trail by ~4:00 PM in late October.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+  },
+  "mount ontake": {
+    text: "Mt. Ontake is a sacred volcano and Japan’s second-highest peak after Fuji — visible from Torii Pass on clear days.",
+    caution: "Weather closes views quickly; dress in layers for the pass.",
+    moreUrl: "https://en.wikipedia.org/wiki/Mount_Ontake",
   },
   "daiwa roynet hotel nagoya taiko-dori side": {
-    text: "A modern business hotel beside Nagoya Station — ideal base before heading into the Kiso Valley.",
+    text: "Beside Nagoya Station — Chubu’s transport hub. Night views over the city lights show Japan’s industrial heart before you head into the mountains.",
     caution: "Station area is busy at rush hour; confirm which exit matches the hotel map.",
   },
   "daiwa roynet hotel nagoya": {
-    text: "A modern business hotel beside Nagoya Station — ideal base before heading into the Kiso Valley.",
+    text: "Beside Nagoya Station — Chubu’s transport hub. Night views over the city lights show Japan’s industrial heart before you head into the mountains.",
     caution: "Station area is busy at rush hour; confirm which exit matches the hotel map.",
   },
   "plaza hotel sakae nakatsugawa": {
-    text: "Comfortable lodging in Nakatsugawa, gateway to Magome and the southern Nakasendo.",
+    text: "Gateway lodging for Magome and the southern Nakasendo — notice hinoki (cypress) in local interiors; Kiso cypress was so prized that illegal cutting once meant death.",
     caution: "Local buses to Magome can fill on weekends — check timetables the night before.",
   },
   "nezame hotel": {
-    text: "A valley stay used as the walking base for mid-Nakasendo days, with breakfast and dinner included on package nights.",
+    text: "Valley base near Nezame-no-toko with breakfast and dinner on package nights — a calm pause after Magome–Tsumago.",
     caution: "Rural evenings are quiet; confirm dinner time with the front desk.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
   },
   "yamaniwa inn": {
-    text: "A smaller inn on the northern Kiso stretch — a calm stop near Narai-juku.",
+    text: "Luxury highlight near Narai — after dinner, a yukata stroll along the silent post-town street is part of the stay.",
     caution: "Space can be limited; keep valuables zipped in shared areas.",
+    moreUrl: "https://en.wikipedia.org/wiki/Narai-juku",
   },
   "traveler's inn takagi": {
-    text: "A family-run inn near Matsumoto Castle above a soba restaurant — atmospheric Japanese-style rooms.",
+    text: "Japanese-style rooms above a soba restaurant near the castle — Nagano soba thrives in cold, dry air. Taste noodles plain with a little salt or wasabi before dipping.",
     caution: "Shared bath/toilet facilities; limited English — keep booking details handy.",
   },
   "shinjuku washington hotel": {
-    text: "A classic Shinjuku hotel convenient for shopping, ramen alleys, and the final Tokyo nights.",
+    text: "A classic Shinjuku hotel convenient for shopping, ramen alleys, and the final Tokyo nights — completing the Nakasendo into the capital.",
     caution:
       "Shinjuku Station exits are confusing with luggage — follow hotel directions carefully.",
+    moreUrl: "https://en.wikipedia.org/wiki/Shinjuku",
   },
 }
 
@@ -266,12 +301,19 @@ export interface DemoActivity {
   highwayBus?: boolean
 }
 
+export type DemoGuideBullet = { label: string; text: string; url?: string }
+
 export interface DemoDay {
   id: number
   day: number
   label: string
   date: string
   activities: DemoActivity[]
+  /** Day-by-day field guide — Plan tab only; optional on non-demo trips */
+  guide?: {
+    title?: string
+    bullets: DemoGuideBullet[]
+  }
 }
 
 let _id = 1
@@ -284,6 +326,30 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 1,
     label: "Day 1 · Singapore → Nagoya",
     date: "2026-10-25",
+    guide: {
+      title: "Arrival in the Shogun’s City",
+      bullets: [
+        {
+          label: "History",
+          text: "Nagoya was the seat of the Owari Tokugawa — one of the most powerful clans in Japan.",
+          url: "https://en.wikipedia.org/wiki/Owari_Domain",
+        },
+        {
+          label: "Fun fact",
+          text: "Birthplace of the three unifiers: Oda Nobunaga, Toyotomi Hideyoshi, and Tokugawa Ieyasu.",
+          url: "https://en.wikipedia.org/wiki/Nagoya",
+        },
+        {
+          label: "Food",
+          text: "Try hitsumabushi (grilled eel over rice) in four stages: plain, with condiments, as dashi broth, then your favorite of the three.",
+          url: "https://en.wikipedia.org/wiki/Hitsumabushi",
+        },
+        {
+          label: "Stay",
+          text: "Daiwa Roynet sits at Nagoya Station — Chubu’s transport hub. Night city lights show Japan’s industrial heart before the mountains.",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -322,6 +388,25 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 2,
     label: "Day 2 · Nakatsugawa-juku",
     date: "2026-10-26",
+    guide: {
+      title: "Gateway to the Mountains",
+      bullets: [
+        {
+          label: "Post town",
+          text: "Nakatsugawa was the 45th post town — a major commercial hub for Kiso Valley timber.",
+          url: "https://en.wikipedia.org/wiki/Nakatsugawa",
+        },
+        {
+          label: "Look for",
+          text: "Kurikinton (栗きんとん). Late October is peak season for chestnut sweets famous across Japan.",
+          url: "https://en.wikipedia.org/wiki/Kuri_kinton",
+        },
+        {
+          label: "Stay",
+          text: "Plaza Hotel Sakae is your base before Magome. Notice hinoki (cypress) in local interiors — Kiso cypress was once so prized that illegal cutting meant death (“one branch, one head”).",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -350,6 +435,26 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 3,
     label: "Day 3 · Magome → Tsumago",
     date: "2026-10-27",
+    guide: {
+      title: "The Most Famous Path",
+      bullets: [
+        {
+          label: "Hiking",
+          text: "Quintessential Nakasendo. Look for ishidatami (stone paving) built to keep the road from washing away in typhoons.",
+          url: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+        },
+        {
+          label: "Culture",
+          text: "Magome climbs a steep slope; Tsumago hides power lines and vending machines off the main street for an 18th-century atmosphere.",
+          url: "https://en.wikipedia.org/wiki/Magome-juku",
+        },
+        {
+          label: "Fun fact",
+          text: "Odaki and Medaki falls appear in the novel Musashi — where Miyamoto Musashi is said to have tempered his spirit under cold water.",
+          url: "https://en.wikipedia.org/wiki/Tsumago-juku",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -385,6 +490,26 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 4,
     label: "Day 4 · Scenic Kiso Valley",
     date: "2026-10-28",
+    guide: {
+      title: "The Dragon’s Gorge",
+      bullets: [
+        {
+          label: "Nature",
+          text: "Nezame Hotel sits near Nezame-no-toko — giant white granite rocks carved by the Kiso River.",
+          url: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
+        },
+        {
+          label: "Mythology",
+          text: "Legend says Urashima Taro (Japan’s Rip Van Winkle) sat here after the Dragon Palace; opening his forbidden box turned him old on these rocks.",
+          url: "https://en.wikipedia.org/wiki/Urashima_Tar%C5%8D",
+        },
+        {
+          label: "Hiking",
+          text: "If you extend the walk, look for the Kiso Five Trees — evergreens once reserved for shogun castles and Ise Grand Shrine.",
+          url: "https://en.wikipedia.org/wiki/Kiso_Valley",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -414,6 +539,24 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 5,
     label: "Day 5 · Narai-juku",
     date: "2026-10-29",
+    guide: {
+      title: "The Thousand Houses",
+      bullets: [
+        {
+          label: "History",
+          text: "Narai at ~900 m was the highest and most prosperous post town — “Narai of a Thousand Houses,” where travelers prepared for Torii Pass.",
+          url: "https://en.wikipedia.org/wiki/Narai-juku",
+        },
+        {
+          label: "Look for",
+          text: "Kiso shikki (lacquerware) from local tree sap — shops that have stayed in the same families for generations.",
+        },
+        {
+          label: "Stay",
+          text: "Yamaniwa Inn is the luxury highlight. After dinner, walk the street in a yukata — an old post town at night is magical.",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -443,6 +586,26 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 6,
     label: "Day 6 · Torii Pass area → Matsumoto",
     date: "2026-10-30",
+    guide: {
+      title: "The High Pass",
+      bullets: [
+        {
+          label: "Hiking",
+          text: "Torii Pass is named for the Shinto gate at the top. Clear days can reveal Mt. Ontake, Japan’s second-highest peak after Fuji.",
+          url: "https://en.wikipedia.org/wiki/Mount_Ontake",
+        },
+        {
+          label: "Culture",
+          text: "Look for the “Stone of the Severed Head” (Kubitsuka) — site of a bloody 16th-century battle between the Takeda and Kiso clans.",
+          url: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+        },
+        {
+          label: "Transition",
+          text: "Toward Matsumoto the landscape opens into a wide basin ringed by the Japan Alps.",
+          url: "https://en.wikipedia.org/wiki/Matsumoto,_Nagano",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -471,6 +634,24 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 7,
     label: "Day 7 · Matsumoto Castle",
     date: "2026-10-31",
+    guide: {
+      title: "The Crow Castle",
+      bullets: [
+        {
+          label: "History",
+          text: "Matsumoto Castle is one of only five “original keeps” left in Japan — built for war, not show.",
+          url: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
+        },
+        {
+          label: "Look for",
+          text: "The Moon Viewing Wing — a red-railed room from the peaceful Edo period for sake and moonlight, unlike the dark defensive keep.",
+        },
+        {
+          label: "Stay",
+          text: "Traveler’s Inn Takagi above a soba restaurant is a culinary deep dive — Nagano soba thrives in cold, dry air. Taste plain with a little salt or wasabi before dipping.",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -493,6 +674,26 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 8,
     label: "Day 8 · Back to Tokyo",
     date: "2026-11-01",
+    guide: {
+      title: "The Road to Edo",
+      bullets: [
+        {
+          label: "Travel",
+          text: "The highway bus to Shinjuku roughly follows the original Nakasendo into the capital.",
+          url: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+        },
+        {
+          label: "Fun fact",
+          text: "Shinjuku (“New Inn”) was founded as the last post town before the shogun’s palace — you finish like a traveler of the Edo road.",
+          url: "https://en.wikipedia.org/wiki/Shinjuku",
+        },
+        {
+          label: "Look for",
+          text: "On a clear day, sit on the right-hand side of the bus for the best chance of Mt. Fuji as you approach Tokyo.",
+          url: "https://en.wikipedia.org/wiki/Mount_Fuji",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -517,6 +718,26 @@ export const BASELINE_DAYS: DemoDay[] = [
     day: 9,
     label: "Day 9 · Free Tokyo · Haneda",
     date: "2026-11-02",
+    guide: {
+      title: "The Modern Post Town",
+      bullets: [
+        {
+          label: "Culture",
+          text: "Shinjuku Gyoen was once a daimyo estate tied to Nakasendo travelers — a calm national garden before departure.",
+          url: "https://en.wikipedia.org/wiki/Shinjuku_Gyoen",
+        },
+        {
+          label: "Departure",
+          text: "A late Haneda flight leaves room for one last bowl of ramen or sushi in Shinjuku.",
+          url: "https://en.wikipedia.org/wiki/Haneda_Airport",
+        },
+        {
+          label: "Omiyage",
+          text: "Pick up Shichimi Togarashi from Yawataya Isogoro (airport or Nagano brand shops) — seven-spice chili dating to the 1700s.",
+          url: "https://en.wikipedia.org/wiki/Shichimi",
+        },
+      ],
+    },
     activities: [
       {
         id: nid(),
@@ -567,6 +788,12 @@ export function buildItinerary(days: DemoDay[] = BASELINE_DAYS): DemoDay[] {
     ...d,
     day: i + 1,
     activities: d.activities.map((a) => ({ ...a })),
+    guide: d.guide
+      ? {
+          title: d.guide.title,
+          bullets: d.guide.bullets.map((b) => ({ ...b })),
+        }
+      : undefined,
   }))
 }
 
@@ -734,6 +961,20 @@ export function buildDocs(days: DemoDay[], totalBudget: number) {
         ``,
         `Estimated separate budget for two: JPY 50,000–80,000`,
         `(own airport transfers, local transport, luggage delivery, extra meals)`,
+      ].join("\n"),
+    ),
+    noteDoc(
+      "demo-doc-trail-tips",
+      "Trail tips · late October",
+      "other",
+      [
+        `Bear bell: You will hear them everywhere. If you forget to buy one, most trailheads have a permanent bell on a pole — give it a loud ring before entering the woods.`,
+        ``,
+        `Daylight: The sun sets behind the mountains early (around 4:45–5:00 PM). Be off forested trails by about 4:00 PM.`,
+        ``,
+        `Soba protocol (Matsumoto inn): Taste soba plain first with a little salt or wasabi to judge the buckwheat, then dip in the sauce.`,
+        ``,
+        `Cash: Trail tea houses and honesty boxes are often cash-only. Keep ¥100 and ¥500 coins ready even though the package is prepaid.`,
       ].join("\n"),
     ),
     noteDoc(

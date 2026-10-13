@@ -12,13 +12,13 @@
   --bg: #f4efe6;
   --surface: #ffffff;
   --surface-muted: #ebe4d8;
-  --border: rgba(20, 16, 12, 0.18);
+  --border: rgba(20, 16, 12, 0.3);
   --amber: #9a5a0a;
   --amber-dim: rgba(154, 90, 10, 0.18);
   --amber-glow: rgba(154, 90, 10, 0.1);
   --text: #12100e;
-  --text-dim: rgba(18, 16, 14, 0.68);
-  --text-faint: rgba(18, 16, 14, 0.45);
+  --text-dim: rgba(18, 16, 14, 0.8);
+  --text-faint: rgba(18, 16, 14, 0.6);
   --red: #c23030;
   --green: #1f8a4c;
   --header-bg: #ffffff;
@@ -36,13 +36,13 @@ html.japan-navi {
   --bg: #f4efe6;
   --surface: #ffffff;
   --surface-muted: #ebe4d8;
-  --border: rgba(123, 24, 27, 0.2);
+  --border: rgba(123, 24, 27, 0.3);
   --amber: #7b181b;
   --amber-dim: rgba(123, 24, 27, 0.16);
   --amber-glow: rgba(123, 24, 27, 0.1);
   --text: #12100e;
-  --text-dim: rgba(18, 16, 14, 0.7);
-  --text-faint: rgba(18, 16, 14, 0.48);
+  --text-dim: rgba(18, 16, 14, 0.8);
+  --text-faint: rgba(18, 16, 14, 0.6);
   --brand: #7b181b;
   --brand-dim: rgba(123, 24, 27, 0.16);
 }
@@ -120,8 +120,11 @@ html.japan-navi body {
 }
 
 .japan-navi-contact-icon {
-  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: var(--amber);
 }
 
 .japan-navi-contact-body {
@@ -334,28 +337,25 @@ body {
   min-width: 0;
   padding: 10px 0 8px;
   background: none;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
   color: var(--text-faint);
-  transition: color 0.2s;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
   position: relative;
 }
 .tab-btn.active {
   color: var(--amber);
+  background: var(--amber-glow);
+  border-color: var(--amber-dim);
+  font-weight: 600;
 }
-.tab-btn.active::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 20%;
-  right: 20%;
-  height: 2px;
-  background: var(--amber);
-  border-radius: 0 0 4px 4px;
+.tab-btn.active .tab-label {
+  font-weight: 600;
 }
 .tab-icon {
   font-size: 21px;
@@ -610,7 +610,7 @@ textarea.input {
 }
 .check-text.done {
   text-decoration: line-through;
-  color: rgba(230, 217, 194, 0.3);
+  color: var(--text-faint);
 }
 
 /* ─── Expenses ─────────────────────────────────────────────────────────── */
@@ -691,7 +691,7 @@ textarea.input {
 }
 .weather-desc {
   font-size: 14px;
-  color: rgba(230, 217, 194, 0.55);
+  color: var(--text-dim);
   margin-top: 6px;
 }
 .weather-city {
@@ -716,7 +716,7 @@ textarea.input {
 .weather-detail-val {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(230, 217, 194, 0.75);
+  color: var(--text-dim);
 }
 
 /* ─── AI Box ───────────────────────────────────────────────────────────── */
@@ -727,7 +727,7 @@ textarea.input {
   padding: 14px;
   font-size: 13px;
   line-height: 1.8;
-  color: rgba(230, 217, 194, 0.85);
+  color: var(--text-dim);
   margin-top: 12px;
   white-space: pre-wrap;
   animation: fadeUp 0.3s ease;
@@ -875,6 +875,87 @@ textarea.input {
 .day-card.collapsed .day-hdr {
   margin-bottom: 0;
 }
+.day-field-guide {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+.day-field-guide-title {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+.day-field-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.day-field-guide-list li {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.day-field-guide-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+  margin-bottom: 2px;
+}
+.day-field-guide-text {
+  display: block;
+}
+.day-field-guide-link {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: var(--amber);
+  text-decoration: none;
+}
+.day-field-guide-link:active {
+  opacity: 0.75;
+}
+.plan-add-activity-btn {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+.plan-add-mode {
+  display: flex;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+.plan-add-mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.plan-add-mode-btn.active {
+  background: var(--surface);
+  color: var(--amber);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
 .day-card.collapsed .day-body {
   display: none;
 }
@@ -893,7 +974,7 @@ textarea.input {
 }
 .act-text.done {
   text-decoration: line-through;
-  color: rgba(230, 217, 194, 0.3);
+  color: var(--text-faint);
 }
 
 /* ── Swipeable activity rows ─────────────────────────────────────────── */
@@ -982,21 +1063,43 @@ textarea.input {
 }
 .swipe-act-text {
   flex: 1;
+  min-width: 0;
   font-size: 13px;
   line-height: 1.45;
+  padding: 4px 0;
   user-select: none;
   cursor: default;
   transition: color 0.2s, text-decoration 0.2s;
+  word-break: break-word;
+}
+.swipe-act-text.locatable {
+  cursor: pointer;
+}
+.swipe-act-time {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.swipe-act-pin {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  vertical-align: middle;
+  color: var(--amber);
+  opacity: 0.85;
 }
 .swipe-act-text.done {
   text-decoration: line-through;
-  color: rgba(230, 217, 194, 0.28);
+  color: var(--text-faint);
 }
 
 /* Swipe hint label on first-ever activity */
 .swipe-hint {
   font-size: 10px;
-  color: rgba(230, 217, 194, 0.25);
+  color: var(--text-faint);
   text-align: center;
   padding: 4px 0 8px;
   letter-spacing: .3px;
@@ -1007,7 +1110,7 @@ textarea.input {
 .empty {
   text-align: center;
   padding: 36px 16px;
-  color: rgba(230, 217, 194, 0.28);
+  color: var(--text-faint);
 }
 .empty-icon {
   font-size: 40px;
@@ -1067,7 +1170,7 @@ textarea.input {
 }
 .phrase-en {
   flex: 1;
-  color: rgba(230, 217, 194, 0.5);
+  color: var(--text-faint);
 }
 .phrase-tr {
   flex: 1;
@@ -1152,7 +1255,7 @@ textarea.input {
   cursor: pointer;
   transition: all 0.15s;
   background: rgba(255, 255, 255, 0.05);
-  color: rgba(230, 217, 194, 0.5);
+  color: var(--text-faint);
 }
 .share-tab-btn.active {
   background: var(--amber);
@@ -1295,7 +1398,7 @@ textarea.input {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: rgba(230, 217, 194, 0.7);
+  color: var(--text-dim);
   padding: 3px 0;
 }
 
@@ -1416,7 +1519,7 @@ textarea.input {
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(230, 217, 194, 0.6);
+  color: var(--text-dim);
   transition: all 0.15s;
   user-select: none;
   white-space: nowrap;
@@ -1891,7 +1994,7 @@ textarea.input {
   line-height: 1;
   transition: all .15s;
   background: transparent;
-  color: rgba(230, 217, 194, 0.35);
+  color: var(--text-faint);
 }
 .vt-btn.active {
   background: var(--amber);
@@ -1923,7 +2026,7 @@ textarea.input {
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.09);
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(230, 217, 194, 0.55);
+  color: var(--text-dim);
 }
 .gf-chip.on {
   background: rgba(255, 168, 40, 0.14);
@@ -2016,7 +2119,7 @@ textarea.input {
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px 16px;
-  color: rgba(230, 217, 194, 0.28);
+  color: var(--text-faint);
 }
 .gallery-empty-icon {
   font-size: 42px;
@@ -2242,7 +2345,7 @@ textarea.input {
 .visa-section-body {
   padding: 0 0 8px 24px;
   font-size: 13px;
-  color: rgba(230, 217, 194, 0.75);
+  color: var(--text-dim);
   line-height: 1.7;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -2369,7 +2472,7 @@ textarea.input {
   border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(230, 217, 194, 0.5);
+  color: var(--text-faint);
   cursor: pointer;
   transition: all .15s;
   text-align: center;
@@ -2666,7 +2769,7 @@ textarea.input {
 }
 .chat-msg-time {
   font-size: 10px;
-  color: rgba(230, 217, 194, 0.3);
+  color: var(--text-faint);
   margin-top: 3px;
   padding: 0 4px;
 }
@@ -3187,13 +3290,13 @@ textarea.input {
 }
 .disc-why {
   font-size: 12px;
-  color: rgba(230, 217, 194, 0.7);
+  color: var(--text-dim);
   line-height: 1.55;
   margin-bottom: 5px;
 }
 .disc-tip {
   font-size: 11px;
-  color: rgba(230, 217, 194, 0.45);
+  color: var(--text-faint);
   line-height: 1.5;
   padding-left: 10px;
   border-left: 2px solid rgba(255, 168, 40, 0.25);
@@ -3687,7 +3790,7 @@ textarea.input {
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(230, 217, 194, 0.6);
+  color: var(--text-dim);
   transition: all 0.15s;
   user-select: none;
 }
@@ -3919,7 +4022,7 @@ textarea.input {
 }
 .brief-weather-tip {
   font-size: 13px;
-  color: rgba(230, 217, 194, 0.75);
+  color: var(--text-dim);
   line-height: 1.6;
 }
 
@@ -3957,7 +4060,7 @@ textarea.input {
 }
 .brief-currency-tip {
   font-size: 13px;
-  color: rgba(230, 217, 194, 0.75);
+  color: var(--text-dim);
   line-height: 1.6;
 }
 
@@ -4024,7 +4127,7 @@ textarea.input {
   border-radius: 12px;
   padding: 14px;
   font-size: 13px;
-  color: rgba(230, 217, 194, 0.85);
+  color: var(--text-dim);
   line-height: 1.7;
   position: relative;
   overflow: hidden;
@@ -4112,7 +4215,7 @@ textarea.input {
   border-radius: 8px;
   padding: 5px 10px;
   font-size: 11px;
-  color: rgba(230, 217, 194, 0.65);
+  color: var(--text-dim);
 }
 
 /* Loading state */
@@ -4156,9 +4259,15 @@ textarea.input {
   opacity: 0.9;
 }
 .dash-card-icon {
-  font-size: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 6px;
   line-height: 1;
+  color: var(--amber);
+}
+.dash-card-icon .app-icon {
+  display: block;
 }
 .dash-card-val {
   font-family: "DM Sans", sans-serif;
@@ -4460,7 +4569,7 @@ textarea.input {
 .day-card,
 .memory-card {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   word-break: break-word;
 }
 /* Sticky map must attach to .content; overflow-x on .content-inner blocks it */
@@ -4667,7 +4776,7 @@ button,
   padding: 10px 14px;
   margin-bottom: 14px;
   font-size: 12px;
-  color: rgba(230, 217, 194, 0.75);
+  color: var(--text-dim);
   line-height: 1.7;
 }
 .recheck-loading {
@@ -5050,8 +5159,8 @@ button,
 }
 .cal-chip-ics {
   background: rgba(230, 217, 194, 0.08);
-  border-color: rgba(230, 217, 194, 0.22);
-  color: rgba(230, 217, 194, 0.85);
+  border-color: var(--text-faint);
+  color: var(--text-dim);
 }
 .cal-chip-ics:hover {
   background: rgba(230, 217, 194, 0.14);
@@ -5085,7 +5194,7 @@ button,
 }
 .plan-export-toggle-meta {
   font-size: 11px;
-  color: rgba(230, 217, 194, 0.45);
+  color: var(--text-faint);
   flex-shrink: 0;
 }
 .plan-itin-sync {
@@ -5098,7 +5207,7 @@ button,
 }
 .plan-export-ics-sub {
   font-size: 11px;
-  color: rgba(230, 217, 194, 0.4);
+  color: var(--text-faint);
   text-align: center;
   margin: 6px 0 0;
   line-height: 1.35;
@@ -5166,7 +5275,7 @@ button,
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(230, 217, 194, 0.6);
+  color: var(--text-dim);
   transition: all 0.15s;
   user-select: none;
 }
@@ -5254,7 +5363,7 @@ button,
 }
 .suggest-context-summary {
   font-size: 12px;
-  color: rgba(230, 217, 194, 0.55);
+  color: var(--text-dim);
   line-height: 1.6;
   margin-bottom: 14px;
   padding: 10px 12px;
@@ -5442,7 +5551,7 @@ button,
 }
 .plan-map-status {
   font-size: 11px;
-  color: rgba(230, 217, 194, 0.68);
+  color: var(--text-dim);
   line-height: 1.4;
   flex: 1;
   min-width: 140px;
@@ -5519,7 +5628,7 @@ button,
 }
 .map-hint {
   font-size: 12px;
-  color: rgba(230, 217, 194, 0.38);
+  color: var(--text-faint);
   text-align: center;
   padding: 10px 0 2px;
   margin-top: 4px;
@@ -5664,7 +5773,7 @@ button,
 .mem-notes {
   font-size: 13px;
   line-height: 1.7;
-  color: rgba(230, 217, 194, 0.75);
+  color: var(--text-dim);
   margin-top: 8px;
 }
 .mem-photo {
@@ -5875,17 +5984,24 @@ button,
   display: block;
 }
 .popup-read-more {
-  display: inline;
-  margin-left: 4px;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 2px;
   border: none;
   background: none;
   color: var(--amber);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  line-height: 1;
+}
+.popup-read-more:active {
+  opacity: 0.75;
+}
+.popup-read-more-icon {
+  display: block;
 }
 .leaflet-popup-close-button {
   color: var(--text-dim) !important;
@@ -5935,7 +6051,7 @@ button,
   padding: 18px 20px;
   font-size: 14px;
   line-height: 2;
-  color: rgba(230, 217, 194, 0.85);
+  color: var(--text-dim);
   white-space: pre-wrap;
 }
 .story-body::-webkit-scrollbar {
@@ -5956,7 +6072,7 @@ button,
   padding: 12px;
   font-size: 13px;
   line-height: 1.85;
-  color: rgba(230, 217, 194, 0.85);
+  color: var(--text-dim);
   white-space: pre-wrap;
   animation: fadeUp 0.3s ease;
 }
@@ -5995,7 +6111,7 @@ button,
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 12px;
-  color: rgba(230, 217, 194, 0.65);
+  color: var(--text-dim);
   line-height: 1.6;
   margin-top: 4px;
   animation: fadeUp 0.25s ease;

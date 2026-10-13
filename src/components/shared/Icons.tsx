@@ -32,12 +32,22 @@ export function IconMenu(props: IconProps) {
   )
 }
 
-/** Curved upward share arrow (no upload tray) */
+/** iOS-style share — tray with arrow up */
 export function IconShare(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M4 20V10a4 4 0 0 1 4-4h12" />
-      <path d="m15 2 5 4-5 4" />
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <path d="m16 6-4-4-4 4" />
+      <path d="M12 2v13" />
+    </Svg>
+  )
+}
+
+/** Phone handset — contact CTA */
+export function IconPhone(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.5-1.1a2 2 0 0 1 2.1-.4c.9.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z" />
     </Svg>
   )
 }
@@ -69,11 +79,12 @@ export function IconPack(props: IconProps) {
   )
 }
 
+/** Clean dollar mark — reads at tab size without a circle */
 export function IconBudget(props: IconProps) {
   return (
     <Svg {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v10M9.5 9.5c.8-1 2-1.5 2.5-1.5s2 .6 2 1.75-1.2 1.75-2.5 2.25-2.5 1.1-2.5 2.4c0 1.2 1.1 2.1 2.5 2.1s2.1-.6 2.6-1.4" />
+      <path d="M12 3v18" />
+      <path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </Svg>
   )
 }
@@ -128,6 +139,17 @@ export function IconItinerary(props: IconProps) {
   return (
     <Svg {...props}>
       <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </Svg>
+  )
+}
+
+/** External link (open article / read more) */
+export function IconExternalLink(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
     </Svg>
   )
 }

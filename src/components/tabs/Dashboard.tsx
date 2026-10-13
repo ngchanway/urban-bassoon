@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { callAi } from "../../lib/ai"
 import { WC_DESC, WC_ICON } from "../../lib/constants"
 import { LS } from "../../lib/storage"
+import { TAB } from "../../lib/tabs"
+import { IconMemories, IconPhone, IconPlan } from "../shared/Icons"
 import { SwipeableActivity } from "../shared/SwipeableActivity"
 export function Dashboard({
   trip,
@@ -317,13 +319,18 @@ Generate the departure day brief.`,
   const hasDates = Boolean(trip.startDate)
   const hasPlanOrPack = itinerary.length > 0 || LS.get("tc_imported_templates", []).length > 0
   const activationItems = [
-    { key: "dest", label: "Set destination", done: Boolean(trip.destination), tab: 1 },
-    { key: "dates", label: "Add travel dates", done: hasDates, tab: 1 },
+    {
+      key: "dest",
+      label: "Set destination",
+      done: Boolean(trip.destination),
+      tab: TAB.plan,
+    },
+    { key: "dates", label: "Add travel dates", done: hasDates, tab: TAB.plan },
     {
       key: "plan",
       label: "Add a day or packing template",
       done: hasPlanOrPack,
-      tab: itinerary.length ? 2 : 1,
+      tab: itinerary.length ? TAB.pack : TAB.plan,
     },
     { key: "invite", label: "Invite your crew", done: Boolean(hasInvite), action: "share" },
   ]
@@ -342,7 +349,7 @@ Generate the departure day brief.`,
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.07)"
+          stroke="var(--border)"
           strokeWidth={stroke}
         />
         <circle
@@ -838,11 +845,13 @@ Generate the departure day brief.`,
       {/* Pre-trip block */}
       {trip.destination && (
         <div className="dash-grid">
-          <div className="dash-card" onClick={() => navigateTo(2)}>
+          <div className="dash-card" onClick={() => navigateTo(TAB.pack)}>
             <div className="dash-ring-wrap">
-              <Ring pct={packingPct} color="#4DB87A" />
+              <Ring pct={packingPct} color="var(--green)" />
               <div className="dash-ring-center">
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#4DB87A" }}>{packingPct}%</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--green)" }}>
+                  {packingPct}%
+                </div>
               </div>
             </div>
             <div className="dash-card-label">Packed</div>
@@ -850,7 +859,7 @@ Generate the departure day brief.`,
               {packingDone} of {packingTotal} items
             </div>
           </div>
-          <div className="dash-card" onClick={() => navigateTo(1)}>
+          <div className="dash-card" onClick={() => navigateTo(TAB.plan)}>
             <div
               className="dash-card-val"
               style={{ fontSize: typeof daysCardVal === "number" ? 28 : 26 }}
@@ -862,9 +871,9 @@ Generate the departure day brief.`,
               <div className="dash-card-sub">until departure</div>
             )}
           </div>
-          <div className="dash-card" onClick={() => navigateTo(3)}>
+          <div className="dash-card" onClick={() => navigateTo(TAB.budget)}>
             <div className="dash-ring-wrap">
-              <Ring pct={budgetPct} color={budgetPct > 85 ? "#FF5C5C" : "#FFA828"} />
+              <Ring pct={budgetPct} color={budgetPct > 85 ? "var(--red)" : "var(--amber)"} />
               <div className="dash-ring-center">
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--amber)" }}>
                   {budgetPct}%
@@ -885,7 +894,9 @@ Generate the departure day brief.`,
           className="japan-navi-contact-cta"
           onClick={() => window.open(guideContact, "_blank", "noopener,noreferrer")}
         >
-          <span className="japan-navi-contact-icon">📞</span>
+          <span className="japan-navi-contact-icon">
+            <IconPhone size={22} />
+          </span>
           <span className="japan-navi-contact-body">
             <span className="japan-navi-contact-label">Contact Japan Navi Journey</span>
             <span className="japan-navi-contact-sub">
@@ -898,7 +909,7 @@ Generate the departure day brief.`,
 
       {trip.destination && savePeople && (
         <div className="card">
-          <div className="card-title">👥 Travellers</div>
+          <div className="card-title">Travellers</div>
           <div
             style={{
               display: "flex",
@@ -953,7 +964,7 @@ Generate the departure day brief.`,
               type="button"
               className="btn-ghost"
               style={{ fontSize: 11, padding: "3px 9px" }}
-              onClick={() => navigateTo(3)}
+              onClick={() => navigateTo(TAB.budget)}
             >
               See all
             </button>
@@ -989,13 +1000,13 @@ Generate the departure day brief.`,
         <div className="today-card">
           <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
             <div className="card-title" style={{ marginBottom: 0, fontSize: 14 }}>
-              📅 {todayDay.label} — Today
+              {todayDay.label} — Today
             </div>
             <button
               type="button"
               className="btn-ghost"
               style={{ fontSize: 11, padding: "3px 9px" }}
-              onClick={() => navigateTo(1)}
+              onClick={() => navigateTo(TAB.plan)}
             >
               Full plan
             </button>
@@ -1025,21 +1036,19 @@ Generate the departure day brief.`,
 
       {trip.destination && (
         <div className="dash-grid">
-          <div className="dash-card" onClick={() => navigateTo(1)}>
-            <div className="dash-card-icon">📅</div>
+          <div className="dash-card" onClick={() => navigateTo(TAB.plan)}>
+            <div className="dash-card-icon">
+              <IconPlan size={22} />
+            </div>
             <div className="dash-card-val">
               {doneActs}/{allActs.length}
             </div>
             <div className="dash-card-label">Activities Done</div>
           </div>
-        </div>
-      )}
-
-      {/* Post-trip block */}
-      {trip.destination && (
-        <div className="dash-grid">
-          <div className="dash-card" onClick={() => navigateTo(5)}>
-            <div className="dash-card-icon">📸</div>
+          <div className="dash-card" onClick={() => navigateTo(TAB.memories)}>
+            <div className="dash-card-icon">
+              <IconMemories size={22} />
+            </div>
             <div className="dash-card-val">{memories.length}</div>
             <div className="dash-card-label">Memories</div>
             {memories.length > 0 && (
@@ -1053,13 +1062,13 @@ Generate the departure day brief.`,
         <div className="card">
           <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
             <div className="card-title" style={{ marginBottom: 0, fontSize: 14 }}>
-              📸 Recent Memories
+              Recent Memories
             </div>
             <button
               type="button"
               className="btn-ghost"
               style={{ fontSize: 11, padding: "3px 9px" }}
-              onClick={() => navigateTo(5)}
+              onClick={() => navigateTo(TAB.memories)}
             >
               See all
             </button>
@@ -1069,7 +1078,11 @@ Generate the departure day brief.`,
               .reverse()
               .slice(0, 8)
               .map((mem) => (
-                <div key={mem.id} className="mem-mini-card" onClick={() => navigateTo(5)}>
+                <div
+                  key={mem.id}
+                  className="mem-mini-card"
+                  onClick={() => navigateTo(TAB.memories)}
+                >
                   <div className="mem-mini-mood">{mem.mood}</div>
                   <div className="mem-mini-title">{mem.title}</div>
                   {mem.photo && (

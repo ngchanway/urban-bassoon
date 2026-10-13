@@ -47,10 +47,15 @@ function escapeHtml(s: string | number | null | undefined) {
 const ITIN_ICON_SVG =
   '<svg class="popup-itin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>'
 
+/** External-link glyph for popup “open article” (no React). */
+const EXT_LINK_SVG =
+  '<svg class="popup-read-more-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>'
+
 export function formatStopPopup(opts: {
   title: string
   localLabel?: string
   dayLabel?: string
+  activityTime?: string
   activitySnippet?: string
   kind?: string
   note?: PlaceNote | null
@@ -61,7 +66,11 @@ export function formatStopPopup(opts: {
   /** @deprecated Full note always shown; kept for call-site compat. */
   compact?: boolean
 }): string {
-  const meta = [opts.dayLabel, opts.activitySnippet || (opts.kind === "hub" ? "Departure" : "")]
+  const meta = [
+    opts.dayLabel,
+    opts.activityTime?.trim(),
+    opts.activitySnippet || (opts.kind === "hub" ? "Departure" : ""),
+  ]
     .filter(Boolean)
     .join(" · ")
 
@@ -70,7 +79,7 @@ export function formatStopPopup(opts: {
   if (note?.text) {
     let moreCtrl = ""
     if (note.moreUrl) {
-      moreCtrl = ` <a class="popup-read-more" href="${escapeHtml(note.moreUrl)}" target="_blank" rel="noopener noreferrer">Read more</a>`
+      moreCtrl = ` <a class="popup-read-more" href="${escapeHtml(note.moreUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open article" title="Open article">${EXT_LINK_SVG}</a>`
     }
     noteHtml = `<div class="popup-notes">${escapeHtml(note.text)}${moreCtrl}</div>`
   }
