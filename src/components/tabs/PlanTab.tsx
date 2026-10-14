@@ -70,6 +70,7 @@ export function PlanTab({
       const text = detail ? `${from} → ${to} · ${detail}` : `${from} → ${to}`
       addActivity(addSheet.day.id, {
         text,
+        kind: "walk",
         mapQuery: from,
         mapQueryTo: to,
         ...(time ? { time } : {}),

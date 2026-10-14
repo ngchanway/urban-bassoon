@@ -111,6 +111,18 @@ export function SwipeableActivity({
         ? " flash-delete"
         : ""
 
+  const statusKey = typeof act.status === "string" ? act.status : ""
+  const statusLabel =
+    statusKey === "booked"
+      ? "Booked"
+      : statusKey === "planned"
+        ? "Planned"
+        : statusKey === "option"
+          ? "Option"
+          : statusKey === "confirm"
+            ? "Confirm"
+            : ""
+
   return (
     <div
       ref={wrapRef}
@@ -163,6 +175,9 @@ export function SwipeableActivity({
             if (onLocate) onLocate()
           }}
         >
+          {statusLabel ? (
+            <span className={`act-status-chip act-status-${statusKey}`}>{statusLabel}</span>
+          ) : null}
           {act.time ? <span className="swipe-act-time">{act.time}</span> : null}
           {act.text}
           {onLocate ? (

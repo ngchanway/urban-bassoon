@@ -29,6 +29,7 @@ import {
   GUIDE_CONTACT,
   ROUTE_BANNER,
   isJapanNaviDemoQuery,
+  needsDemoContentReseed,
   seedNakasendoDemo,
   seedNakasendoGeocodeCache,
   shouldResetDemo,
@@ -58,13 +59,14 @@ function bootstrapJapanNaviDemo() {
   const trips = LS.get<Array<{ id: string }>>("tc_trips", [])
   const hasDemo = trips.some((t) => t.id === DEMO_TRIP_ID)
   const reset = shouldResetDemo()
-  const needSeed = reset || !LS.get(DEMO_LOADED_KEY, false) || !hasDemo
+  const contentStale = needsDemoContentReseed()
+  const needSeed = reset || contentStale || !LS.get(DEMO_LOADED_KEY, false) || !hasDemo
 
   const active = LS.get("tc_active_trip", "")
   if (active && active !== DEMO_TRIP_ID) snapshotTrip(active)
 
   if (needSeed) {
-    seedNakasendoDemo({ reset })
+    seedNakasendoDemo({ reset: reset || contentStale })
   } else {
     restoreTrip(DEMO_TRIP_ID)
     LS.set("tc_active_trip", DEMO_TRIP_ID)

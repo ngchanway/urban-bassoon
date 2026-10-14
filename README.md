@@ -50,15 +50,29 @@ Open http://localhost:5173
 
 Maps (Plan Route map, Memories) need a [CARTO Basemaps](https://carto.com/basemaps/apikey/) API key in `.env.local`. Restart the dev server after changing it. The key is inlined into the client bundle at build time (expected for basemap keys); do not commit `.env.local`.
 
-### Local AI proxy (optional)
+### Local API proxy (geocode, route, AI)
+
+Vite alone cannot serve `functions/api/*`. Run Wrangler next to Vite:
+
+```bash
+npm run build
+npm run pages:dev   # http://127.0.0.1:8788 — local mode (no workers.dev needed)
+```
+
+In another terminal:
+
+```bash
+npm run dev         # http://localhost:5173 — proxies /api/* → :8788
+```
+
+Optional AI (Gemini primary):
 
 ```bash
 cp .dev.vars.example .dev.vars
-# Add your GEMINI_API_KEY to .dev.vars
-npx wrangler pages dev dist --compatibility-date=2024-09-23
+# Add GEMINI_API_KEY to .dev.vars
 ```
 
-In another terminal, `npm run dev` proxies `/api/*` to wrangler (see `vite.config.ts`).
+Local `pages:dev` omits the Workers AI binding so Wrangler stays in local mode (no workers.dev subdomain). Live foot routes (`/api/route` → OSRM) and geocode work. Gemini AI still works with `GEMINI_API_KEY` in `.dev.vars`. Bind Workers AI in the Cloudflare Pages dashboard for production fallback if needed.
 
 ## Scripts
 

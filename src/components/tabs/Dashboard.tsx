@@ -1026,7 +1026,10 @@ Generate the departure day brief.`,
                   onDelete={() => removeActivity(todayDay.id, act.id)}
                   onExpense={() => onQuickExpense(act, todayDay)}
                   onMemory={() => onQuickMemory(act, todayDay)}
-                  isFirst={i === 0} onLocate={undefined} flash={undefined}                />
+                  isFirst={i === 0}
+                  onLocate={undefined}
+                  flash={undefined}
+                />
               ))}
               <div className="swipe-hint">← swipe to delete · swipe to complete →</div>
             </div>

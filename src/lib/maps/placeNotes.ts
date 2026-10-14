@@ -51,6 +51,8 @@ const ITIN_ICON_SVG =
 const EXT_LINK_SVG =
   '<svg class="popup-read-more-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>'
 
+const NOTE_COMPACT_LEN = 90
+
 export function formatStopPopup(opts: {
   title: string
   localLabel?: string
@@ -63,30 +65,47 @@ export function formatStopPopup(opts: {
   activityId?: string | number
   stopId?: string | number
   expanded?: boolean
-  /** @deprecated Full note always shown; kept for call-site compat. */
+  /** When true (default), truncate note and hide caution until expanded. */
   compact?: boolean
 }): string {
-  const meta = [
+  const compact = opts.compact !== false && !opts.expanded
+  const metaParts = [
     opts.dayLabel,
     opts.activityTime?.trim(),
     opts.activitySnippet || (opts.kind === "hub" ? "Departure" : ""),
-  ]
-    .filter(Boolean)
-    .join(" · ")
+  ].filter(Boolean)
+  const metaFull = metaParts.join(" · ")
+  const meta = compact && metaFull.length > 72 ? `${metaFull.slice(0, 69)}…` : metaFull
 
   let noteHtml = ""
   const note = opts.note
   if (note?.text) {
     let moreCtrl = ""
-    if (note.moreUrl) {
+    if (!compact && note.moreUrl) {
       moreCtrl = ` <a class="popup-read-more" href="${escapeHtml(note.moreUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open article" title="Open article">${EXT_LINK_SVG}</a>`
     }
-    noteHtml = `<div class="popup-notes">${escapeHtml(note.text)}${moreCtrl}</div>`
+    const body =
+      compact && note.text.length > NOTE_COMPACT_LEN
+        ? `${note.text.slice(0, NOTE_COMPACT_LEN - 1)}…`
+        : note.text
+    noteHtml = `<div class="popup-notes">${escapeHtml(body)}${moreCtrl}</div>`
   }
 
-  const cautionHtml = note?.caution
-    ? `<div class="popup-notes popup-caution"><strong>Watch out:</strong> ${escapeHtml(note.caution)}</div>`
-    : ""
+  const cautionHtml =
+    !compact && note?.caution
+      ? `<div class="popup-notes popup-caution"><strong>Watch out:</strong> ${escapeHtml(note.caution)}</div>`
+      : ""
+
+  const canExpand = Boolean(
+    note?.text &&
+      (note.text.length > NOTE_COMPACT_LEN || note.caution || note.moreUrl || metaFull.length > 72),
+  )
+  let toggleHtml = ""
+  if (canExpand || opts.expanded) {
+    const label = compact ? "More" : "Less"
+    const next = compact ? "1" : "0"
+    toggleHtml = `<button type="button" class="popup-expand-toggle" data-expand="${next}" aria-expanded="${compact ? "false" : "true"}">${label}</button>`
+  }
 
   let itinHtml = ""
   if (opts.dayId || opts.activityId) {
@@ -97,10 +116,11 @@ export function formatStopPopup(opts: {
 
   const local = opts.localLabel?.trim()
   const localHtml = local ? `<div class="popup-local">${escapeHtml(local)}</div>` : ""
+  const stopAttr = opts.stopId != null ? ` data-stop-id="${escapeHtml(opts.stopId)}"` : ""
 
-  return `<div class="popup-title-row"><div class="popup-title-stack"><div class="popup-title">${escapeHtml(opts.title)}</div>${localHtml}</div>${itinHtml}</div>${
+  return `<div class="popup-body"${stopAttr} data-compact="${compact ? "1" : "0"}"><div class="popup-title-row"><div class="popup-title-stack"><div class="popup-title">${escapeHtml(opts.title)}</div>${localHtml}</div>${itinHtml}</div>${
     meta ? `<div class="popup-meta">${escapeHtml(meta)}</div>` : ""
-  }${noteHtml}${cautionHtml}`
+  }${noteHtml}${cautionHtml}${toggleHtml}</div>`
 }
 
 /** Lazy AI note for custom places; caches in tc_place_notes. */

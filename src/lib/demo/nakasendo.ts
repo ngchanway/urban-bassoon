@@ -5,7 +5,7 @@
  * Adjust BASELINE_DAYS / guestCount; budgetFromItinerary keeps tc_budget in sync.
  */
 
-import { mergeGeocodeCache } from "../maps/geocode"
+import { mergeGeocodeCache, purgeStaleDemoGeocode } from "../maps/geocode"
 import { mergePlaceNotes } from "../maps/placeNotes"
 import { LS } from "../storage"
 import { snapshotTrip } from "../trip"
@@ -42,6 +42,64 @@ const DEMO_GEO: Record<string, { lat: number; lng: number; label: string; local?
   },
   magome: { lat: 35.5264, lng: 137.5647, label: "Magome", local: "馬籠" },
   tsumago: { lat: 35.5772, lng: 137.595, label: "Tsumago", local: "妻籠" },
+  nagiso: { lat: 35.595, lng: 137.608, label: "Nagiso", local: "南木曽" },
+  "nagiso station": {
+    lat: 35.595,
+    lng: 137.608,
+    label: "Nagiso Station",
+    local: "南木曽駅",
+  },
+  suhara: { lat: 35.8005, lng: 137.7205, label: "Suhara", local: "須原" },
+  "suhara station": {
+    lat: 35.8005,
+    lng: 137.7205,
+    label: "Suhara Station",
+    local: "須原駅",
+  },
+  "suhara-juku": {
+    lat: 35.8012,
+    lng: 137.7212,
+    label: "Suhara-juku",
+    local: "須原宿",
+  },
+  "suhara-sui": {
+    lat: 35.801,
+    lng: 137.721,
+    label: "Suhara-sui",
+    local: "須原水",
+  },
+  "josho-ji": {
+    lat: 35.8025,
+    lng: 137.7228,
+    label: "Josho-ji",
+    local: "定勝寺",
+  },
+  "terao-en": {
+    lat: 35.76,
+    lng: 137.705,
+    label: "Terao-en",
+    local: "寺尾園",
+  },
+  agematsu: { lat: 35.7839, lng: 137.6944, label: "Agematsu", local: "上松" },
+  "agematsu station": {
+    lat: 35.7839,
+    lng: 137.6944,
+    label: "Agematsu Station",
+    local: "上松駅",
+  },
+  "nezame-no-toko": {
+    lat: 35.7255,
+    lng: 137.702,
+    label: "Nezame-no-toko",
+    local: "寝覚の床",
+  },
+  yabuhara: { lat: 35.934, lng: 137.797, label: "Yabuhara", local: "藪原" },
+  "yabuhara station": {
+    lat: 35.934,
+    lng: 137.797,
+    label: "Yabuhara Station",
+    local: "藪原駅",
+  },
   "kiso valley": { lat: 35.7, lng: 137.7, label: "Kiso Valley", local: "木曽谷" },
   kiso: { lat: 35.7, lng: 137.7, label: "Kiso", local: "木曽" },
   narai: { lat: 35.9703, lng: 137.8125, label: "Narai", local: "奈良井" },
@@ -57,6 +115,24 @@ const DEMO_GEO: Record<string, { lat: number; lng: number; label: string; local?
     lng: 137.9689,
     label: "Matsumoto Castle",
     local: "松本城",
+  },
+  nakamachi: {
+    lat: 36.2358,
+    lng: 137.9715,
+    label: "Nakamachi",
+    local: "中町",
+  },
+  "nakamachi-dori": {
+    lat: 36.2358,
+    lng: 137.9715,
+    label: "Nakamachi-dori",
+    local: "中町通り",
+  },
+  "nawate-dori": {
+    lat: 36.2365,
+    lng: 137.9705,
+    label: "Nawate-dori",
+    local: "縄手通り",
   },
   haneda: { lat: 35.5494, lng: 139.7798, label: "Haneda", local: "羽田" },
   tokyo: { lat: 35.6762, lng: 139.6503, label: "Tokyo", local: "東京" },
@@ -179,14 +255,76 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
     moreUrl: "https://en.wikipedia.org/wiki/Tsumago-juku",
   },
   "nezame-no-toko": {
-    text: "Nezame-no-toko’s white granite gorge was carved by the Kiso River. Legend places Urashima Taro here after the Dragon Palace — opening his forbidden box turned him old.",
-    caution: "Rock paths can be slick after rain; stay on marked viewpoints.",
+    text: "National Scenic Beauty: square white granite “beds” (*toko*) in the emerald Kiso River. Legend places Urashima Taro here after the Dragon Palace — climb onto the rocks for free and eat your convenience-store lunch.",
+    caution:
+      "Rock paths can be slick after rain; stay on marked viewpoints. Free entry; misty rocks feel otherworldly.",
     moreUrl: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
   },
   nezame: {
-    text: "Nezame-no-toko’s white granite gorge was carved by the Kiso River. Legend places Urashima Taro here after the Dragon Palace — opening his forbidden box turned him old.",
-    caution: "Rock paths can be slick after rain; stay on marked viewpoints.",
+    text: "National Scenic Beauty: square white granite “beds” (*toko*) in the emerald Kiso River. Legend places Urashima Taro here after the Dragon Palace — climb onto the rocks for free and eat your convenience-store lunch.",
+    caution:
+      "Rock paths can be slick after rain; stay on marked viewpoints. Free entry; misty rocks feel otherworldly.",
     moreUrl: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
+  },
+  suhara: {
+    text: "Suhara-juku is the start of the ~12 km walk toward Agematsu. Fill bottles at Suhara-sui (mountain spring) and buy lunch before you leave — no shops until Agematsu.",
+    caution: "Start early; long day with gorge overlooks and hinoki forest. Daypack only.",
+    moreUrl: "https://en.wikipedia.org/wiki/Kiso_Valley",
+  },
+  "suhara station": {
+    text: "Suhara-juku is the start of the ~12 km walk toward Agematsu. Fill bottles at Suhara-sui (mountain spring) and buy lunch before you leave — no shops until Agematsu.",
+    caution: "Start early; long day with gorge overlooks and hinoki forest. Daypack only.",
+    moreUrl: "https://en.wikipedia.org/wiki/Kiso_Valley",
+  },
+  "suhara-juku": {
+    text: "Suhara-juku is the start of the ~12 km walk toward Agematsu. Fill bottles at Suhara-sui (mountain spring) and buy lunch before you leave — no shops until Agematsu.",
+    caution: "Start early; long day with gorge overlooks and hinoki forest. Daypack only.",
+    moreUrl: "https://en.wikipedia.org/wiki/Kiso_Valley",
+  },
+  "suhara-sui": {
+    text: "Famous mountain-spring fountain in Suhara-juku — free, and often called some of the best-tasting water in Japan. Fill every bottle before the 12 km stretch.",
+    caution: "No reliable shops or taps on the trail until Agematsu.",
+  },
+  "josho-ji": {
+    text: "Leave Suhara past Josho-ji Temple: behind the buildings the mountain rises in centuries-old cedars — a nature–culture transition into the deep Kiso Valley.",
+    caution: "Quiet temple grounds; keep voices low as you pass.",
+  },
+  "terao-en": {
+    text: "Protected Kiso-Hinoki (cypress) grove — straight, towering timber once reserved for imperial palaces. Listen for *uguisu* (Japanese bush warbler) in the *komorebi* light.",
+    caution: "Stay on the marked trail through the grove.",
+    moreUrl: "https://en.wikipedia.org/wiki/Chamaecyparis_obtusa",
+  },
+  agematsu: {
+    text: "Agematsu-juku sits above Nezame-no-toko. From the gorge it is ~15–20 min uphill to the station (¥240 to Suhara) — or walk “home” to Nezame Hotel and skip the fare.",
+    caution: "If finishing at dusk, prefer the hotel walk-home over waiting for a late train.",
+    moreUrl: "https://en.wikipedia.org/wiki/Agematsu",
+  },
+  "agematsu station": {
+    text: "Agematsu-juku sits above Nezame-no-toko. From the gorge it is ~15–20 min uphill to the station (¥240 to Suhara) — or walk “home” to Nezame Hotel and skip the fare.",
+    caution: "If finishing at dusk, prefer the hotel walk-home over waiting for a late train.",
+    moreUrl: "https://en.wikipedia.org/wiki/Agematsu",
+  },
+  nagiso: {
+    text: "Nagiso Station is the JR hub after Magome–Tsumago. Walk ~3–4 km from Tsumago when daylight and energy allow, or take the local bus.",
+    caution: "Be off forested trail by ~4:00 PM in late October.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nagiso",
+  },
+  "nagiso station": {
+    text: "Nagiso Station is the JR hub after Magome–Tsumago. Walk ~3–4 km from Tsumago when daylight and energy allow, or take the local bus.",
+    caution: "Be off forested trail by ~4:00 PM in late October.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nagiso",
+  },
+  yabuhara: {
+    text: "Yabuhara is the usual start for Torii Pass toward Narai — uphill to the gate, then downhill into the Thousand Houses.",
+    caution:
+      "No shops on the pass trail; pack water and snacks. Skip to JR Narai in rain or fatigue.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+  },
+  "yabuhara station": {
+    text: "Yabuhara is the usual start for Torii Pass toward Narai — uphill to the gate, then downhill into the Thousand Houses.",
+    caution:
+      "No shops on the pass trail; pack water and snacks. Skip to JR Narai in rain or fatigue.",
+    moreUrl: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
   },
   narai: {
     text: "Narai (“of a Thousand Houses”) sat at ~900 m — the highest, wealthiest Kiso post town, where travelers prepared for Torii Pass. Look for family lacquerware (Kiso shikki) shops.",
@@ -209,6 +347,21 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
     caution:
       "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
     moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
+  },
+  nakamachi: {
+    text: "Nakamachi-dori is the preserved merchant street south of the castle — black-and-white latticed warehouses, cafés, and craft shops in the old town.",
+    caution: "Narrow lanes; watch bikes and delivery carts when walking with a daypack.",
+    moreUrl: "https://en.wikipedia.org/wiki/Matsumoto,_Nagano",
+  },
+  "nakamachi-dori": {
+    text: "Nakamachi-dori is the preserved merchant street south of the castle — black-and-white latticed warehouses, cafés, and craft shops in the old town.",
+    caution: "Narrow lanes; watch bikes and delivery carts when walking with a daypack.",
+    moreUrl: "https://en.wikipedia.org/wiki/Matsumoto,_Nagano",
+  },
+  "nawate-dori": {
+    text: "Nawate-dori (“frog street”) runs along the Metoba River with souvenir stalls and snack shops — a short stroll from the castle into the old town.",
+    caution: "Can be busy on weekends; keep valuables zipped in crowds.",
+    moreUrl: "https://en.wikipedia.org/wiki/Matsumoto,_Nagano",
   },
   haneda: {
     text: "Haneda sits closer to central Tokyo than Narita and is a convenient international departure point after time in the city.",
@@ -240,8 +393,9 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
     caution: "Local buses to Magome can fill on weekends — check timetables the night before.",
   },
   "nezame hotel": {
-    text: "Valley base near Nezame-no-toko with breakfast and dinner on package nights — a calm pause after Magome–Tsumago.",
-    caution: "Rural evenings are quiet; confirm dinner time with the front desk.",
+    text: "Valley base beside Nezame-no-toko with breakfast and dinner on package nights — after the Suhara walk you can finish at the rocks and walk “home” here.",
+    caution:
+      "Rural evenings are quiet; confirm dinner time with the front desk. Leave large bags here on Day 4.",
     moreUrl: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
   },
   "yamaniwa inn": {
@@ -263,6 +417,9 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
 
 export const DEMO_TRIP_ID = "demo_nakasendo"
 export const DEMO_LOADED_KEY = "tc_demo_nakasendo_loaded"
+/** Bump when BASELINE_DAYS / demo map content changes so ?demo=nakasendo reseeds without ?reset=1. */
+export const DEMO_CONTENT_VERSION = 2
+export const DEMO_VERSION_KEY = "tc_demo_nakasendo_version"
 export const GUIDE_CONTACT =
   "mailto:hello@japan-navi-journey.com?subject=Nakasendo%20Walking%20Journey"
 export const ROUTE_BANNER =
@@ -287,6 +444,7 @@ const BUS_TICKET_SLICE = BASE_PACKAGE * 0.06
 
 export type DemoMeal = "B" | "D" | "BD"
 export type DemoActKind = "walk" | "stay" | "transfer" | "meal" | "note"
+export type DemoActStatus = "booked" | "planned" | "option" | "confirm"
 
 export interface DemoActivity {
   id: number
@@ -299,6 +457,11 @@ export interface DemoActivity {
   lodging?: boolean
   overnightBus?: boolean
   highwayBus?: boolean
+  /** Plan map pin / From→To corridor */
+  mapQuery?: string
+  mapQueryTo?: string
+  /** Booked / Planned / Option / Confirm chip */
+  status?: DemoActStatus
 }
 
 export type DemoGuideBullet = { label: string; text: string; url?: string }
@@ -357,6 +520,9 @@ export const BASELINE_DAYS: DemoDay[] = [
         done: false,
         time: "00:55",
         kind: "transfer",
+        status: "planned",
+        mapQuery: "Singapore Changi Airport",
+        mapQueryTo: "Narita Airport",
       },
       {
         id: nid(),
@@ -364,6 +530,9 @@ export const BASELINE_DAYS: DemoDay[] = [
         done: false,
         time: "08:40",
         kind: "transfer",
+        status: "planned",
+        mapQuery: "Narita Airport",
+        mapQueryTo: "Shinjuku",
       },
       {
         id: nid(),
@@ -372,6 +541,9 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "transfer",
         highwayBus: true,
         included: true,
+        status: "planned",
+        mapQuery: "Shinjuku",
+        mapQueryTo: "Nagoya",
       },
       {
         id: nid(),
@@ -380,17 +552,24 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "stay",
         lodging: true,
         included: true,
+        status: "booked",
+        mapQuery: "Daiwa Roynet Hotel Nagoya Taiko-dori Side",
       },
     ],
   },
   {
     id: nid(),
     day: 2,
-    label: "Day 2 · Nakatsugawa-juku",
+    label: "Day 2 · Explore Nagoya → Nakatsugawa",
     date: "2026-10-26",
     guide: {
       title: "Gateway to the Mountains",
       bullets: [
+        {
+          label: "History",
+          text: "Nagoya was the seat of the Owari Tokugawa — birthplace of Nobunaga, Hideyoshi, and Ieyasu — before you climb into the Kiso timber country.",
+          url: "https://en.wikipedia.org/wiki/Nagoya",
+        },
         {
           label: "Post town",
           text: "Nakatsugawa was the 45th post town — a major commercial hub for Kiso Valley timber.",
@@ -402,23 +581,44 @@ export const BASELINE_DAYS: DemoDay[] = [
           url: "https://en.wikipedia.org/wiki/Kuri_kinton",
         },
         {
+          label: "Luggage",
+          text: "Move with all bags today. Ask Plaza Hotel Sakae about storage or forwarding before tomorrow’s Magome walk — nothing is booked yet.",
+        },
+        {
+          label: "Cash",
+          text: "Withdraw backup yen in Nagoya; Nakatsugawa-juku is quieter and some shops prefer cash.",
+        },
+        {
           label: "Stay",
-          text: "Plaza Hotel Sakae is your base before Magome. Notice hinoki (cypress) in local interiors — Kiso cypress was once so prized that illegal cutting meant death (“one branch, one head”).",
+          text: "Plaza Hotel Sakae is in Nakatsugawa City (not Nagoya’s Sakae) — ~2 min from the station. Notice hinoki in local interiors — Kiso cypress was once so prized that illegal cutting meant death.",
         },
       ],
     },
     activities: [
       {
         id: nid(),
-        text: "Train Nagoya → Nakatsugawa",
+        text: "Easy city walking in Nagoya (morning)",
         done: false,
-        kind: "transfer",
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Nagoya",
       },
       {
         id: nid(),
-        text: "Explore Nakatsugawa-juku and surrounding area (~2–4 km, 1–2 hours)",
+        text: "JR Chuo Line Nagoya → Nakatsugawa (aim afternoon)",
+        done: false,
+        kind: "transfer",
+        status: "planned",
+        mapQuery: "Nagoya",
+        mapQueryTo: "Nakatsugawa",
+      },
+      {
+        id: nid(),
+        text: "Optional stroll Nakatsugawa-juku (~2–4 km)",
         done: false,
         kind: "walk",
+        status: "option",
+        mapQuery: "Nakatsugawa-juku",
       },
       {
         id: nid(),
@@ -427,20 +627,22 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "stay",
         lodging: true,
         included: true,
+        status: "booked",
+        mapQuery: "Plaza Hotel Sakae Nakatsugawa",
       },
     ],
   },
   {
     id: nid(),
     day: 3,
-    label: "Day 3 · Magome → Tsumago",
+    label: "Day 3 · Magome → Tsumago → Nagiso",
     date: "2026-10-27",
     guide: {
       title: "The Most Famous Path",
       bullets: [
         {
           label: "Hiking",
-          text: "Quintessential Nakasendo. Look for ishidatami (stone paving) built to keep the road from washing away in typhoons.",
+          text: "Magome → Tsumago ~8–8.5 km, 2.5–3 hours walking (breaks extra). Climb to Magome Pass, then descend — reverse has more uphill. Look for ishidatami (stone paving).",
           url: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
         },
         {
@@ -453,26 +655,70 @@ export const BASELINE_DAYS: DemoDay[] = [
           text: "Odaki and Medaki falls appear in the novel Musashi — where Miyamoto Musashi is said to have tempered his spirit under cold water.",
           url: "https://en.wikipedia.org/wiki/Tsumago-juku",
         },
+        {
+          label: "Luggage",
+          text: "Do not walk with large bags. Magome–Tsumago same-day transfer (indicative ¥1,000/item, drop 8:30–11:30, collect 1:00–5:00) — confirm at tourist info; not arranged yet.",
+        },
+        {
+          label: "Walking",
+          text: "Allow 4–5 hours with breaks; finish forested trail by ~4:00 PM. Ring a bear bell at trailheads.",
+        },
+        {
+          label: "Backup",
+          text: "If tired, dark, or rainy after Tsumago, take the local bus to Nagiso Station instead of the 3–4 km walk. Start earlier from Nakatsugawa if chasing the 17:00 Nezame check-in.",
+        },
+        {
+          label: "Timetable",
+          text: "Kitaena bus Nakatsugawa → Magome; Nagiso town bus; JR Chuo toward Agematsu / Nezame Hotel — confirm on the day.",
+          url: "https://railway.jr-central.co.jp/ticket/timetable/",
+        },
       ],
     },
     activities: [
       {
         id: nid(),
-        text: "Bus to Magome · begin Nakasendo walk",
+        text: "Kitaena bus Nakatsugawa Station → Magome",
         done: false,
         kind: "transfer",
+        status: "planned",
+        mapQuery: "Nakatsugawa",
+        mapQueryTo: "Magome",
       },
       {
         id: nid(),
         text: "Walk Magome → Tsumago (~8 km, about 3 hours)",
         done: false,
         kind: "walk",
+        status: "planned",
+        mapQuery: "Magome",
+        mapQueryTo: "Tsumago",
       },
       {
         id: nid(),
-        text: "Public transport further north in the Kiso Valley",
+        text: "Walk Tsumago → Nagiso Station (~3–4 km)",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Tsumago",
+        mapQueryTo: "Nagiso Station",
+      },
+      {
+        id: nid(),
+        text: "Fallback: local bus Tsumago → Nagiso Station",
         done: false,
         kind: "transfer",
+        status: "option",
+        mapQuery: "Tsumago",
+        mapQueryTo: "Nagiso Station",
+      },
+      {
+        id: nid(),
+        text: "JR Chuo Nagiso → Agematsu / Nezame Hotel area",
+        done: false,
+        kind: "transfer",
+        status: "confirm",
+        mapQuery: "Nagiso Station",
+        mapQueryTo: "Nezame Hotel",
       },
       {
         id: nid(),
@@ -482,46 +728,137 @@ export const BASELINE_DAYS: DemoDay[] = [
         lodging: true,
         meal: "BD",
         included: true,
+        status: "booked",
+        mapQuery: "Nezame Hotel",
       },
     ],
   },
   {
     id: nid(),
     day: 4,
-    label: "Day 4 · Scenic Kiso Valley",
+    label: "Day 4 · Suhara → Agematsu (~12 km)",
     date: "2026-10-28",
     guide: {
-      title: "The Dragon’s Gorge",
+      title: "Raw Kiso Valley",
       bullets: [
         {
           label: "Nature",
-          text: "Nezame Hotel sits near Nezame-no-toko — giant white granite rocks carved by the Kiso River.",
+          text: "Default Option C: Suhara → Agematsu ~12 km. Cedars at Josho-ji, Terao-en hinoki / *komorebi*, Central Alps (Kiso-Komagatake) to the east, emerald Kiso River S-bends, finale at Nezame-no-toko.",
           url: "https://en.wikipedia.org/wiki/Nezame_no_Toko",
         },
         {
           label: "Mythology",
-          text: "Legend says Urashima Taro (Japan’s Rip Van Winkle) sat here after the Dragon Palace; opening his forbidden box turned him old on these rocks.",
+          text: "Legend says Urashima Taro sat on these granite beds after the Dragon Palace; opening his forbidden box turned him old here.",
           url: "https://en.wikipedia.org/wiki/Urashima_Tar%C5%8D",
         },
         {
           label: "Hiking",
-          text: "If you extend the walk, look for the Kiso Five Trees — evergreens once reserved for shogun castles and Ise Grand Shrine.",
+          text: "Look for the Kiso Five Trees — evergreens once reserved for shogun castles and Ise Grand Shrine. Every scenic stop on this stretch is free.",
           url: "https://en.wikipedia.org/wiki/Kiso_Valley",
+        },
+        {
+          label: "Water",
+          text: "Fill bottles at Suhara-sui (mountain spring) in Suhara-juku before you start — free and famous tasting water.",
+        },
+        {
+          label: "Lunch",
+          text: "Buy bento or onigiri at a convenience store before leaving Suhara — zero shops for ~12 km until Agematsu.",
+        },
+        {
+          label: "Luggage",
+          text: "Leave large bags at Nezame Hotel; daypack only.",
+        },
+        {
+          label: "Backup",
+          text: "Finish at Nezame-no-toko and walk “home” to Nezame Hotel (skip ¥240 Suhara→Agematsu train). Or ~15–20 min uphill to Agematsu Station. Options A/B/D remain if you prefer a shorter day.",
+        },
+        {
+          label: "Timetable",
+          text: "JR Chuo to Suhara and optional return from Agematsu — confirm connections before starting.",
+          url: "https://railway.jr-central.co.jp/ticket/timetable/",
         },
       ],
     },
     activities: [
       {
         id: nid(),
-        text: "Train/bus to a suitable Nakasendo starting point",
+        text: "JR to Suhara Station (daypack from Nezame Hotel)",
         done: false,
         kind: "transfer",
+        status: "confirm",
+        mapQuery: "Nezame Hotel",
+        mapQueryTo: "Suhara Station",
       },
       {
         id: nid(),
-        text: "Walk selected Nakasendo section (~5–7 km, 2–3 hours; shorten if needed)",
+        text: "Fill water at Suhara-sui spring (free)",
+        done: false,
+        kind: "note",
+        status: "planned",
+        mapQuery: "Suhara-sui",
+      },
+      {
+        id: nid(),
+        text: "Pass Josho-ji Temple · cedar backdrop",
         done: false,
         kind: "walk",
+        status: "planned",
+        mapQuery: "Josho-ji",
+      },
+      {
+        id: nid(),
+        text: "Walk Suhara → Nezame-no-toko via Terao-en (~12 km)",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Suhara",
+        mapQueryTo: "Nezame-no-toko",
+      },
+      {
+        id: nid(),
+        text: "Terao-en Kiso-Hinoki grove (*komorebi*)",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Terao-en",
+      },
+      {
+        id: nid(),
+        text: "Nezame-no-toko · free granite beds · lunch stop",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Nezame-no-toko",
+      },
+      {
+        id: nid(),
+        text: "Walk home to Nezame Hotel (skip Agematsu train if possible)",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Nezame-no-toko",
+        mapQueryTo: "Nezame Hotel",
+      },
+      {
+        id: nid(),
+        text: "Option A: Nagiso → Nojiri (~9–10 km) instead",
+        done: false,
+        kind: "note",
+        status: "option",
+      },
+      {
+        id: nid(),
+        text: "Option B: Nojiri → Suhara (~9–10 km) instead",
+        done: false,
+        kind: "note",
+        status: "option",
+      },
+      {
+        id: nid(),
+        text: "Option D: Short Agematsu & Nezame-no-toko loop instead",
+        done: false,
+        kind: "note",
+        status: "option",
       },
       {
         id: nid(),
@@ -531,25 +868,49 @@ export const BASELINE_DAYS: DemoDay[] = [
         lodging: true,
         meal: "BD",
         included: true,
+        status: "booked",
+        mapQuery: "Nezame Hotel",
       },
     ],
   },
   {
     id: nid(),
     day: 5,
-    label: "Day 5 · Narai-juku",
+    label: "Day 5 · Yabuhara → Torii Pass → Narai",
     date: "2026-10-29",
     guide: {
-      title: "The Thousand Houses",
+      title: "The High Pass",
       bullets: [
         {
+          label: "Hiking",
+          text: "Yabuhara → Torii Pass → Narai ~6–6.2 km, 3–3.5 hours. Higher effort: uphill to the Shinto gate, then downhill to Narai. Clear days can reveal Mt. Ontake.",
+          url: "https://en.wikipedia.org/wiki/Mount_Ontake",
+        },
+        {
+          label: "Culture",
+          text: "Look for the “Stone of the Severed Head” (Kubitsuka) — site of a bloody 16th-century Takeda–Kiso clash.",
+          url: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+        },
+        {
           label: "History",
-          text: "Narai at ~900 m was the highest and most prosperous post town — “Narai of a Thousand Houses,” where travelers prepared for Torii Pass.",
+          text: "Narai at ~900 m was the highest and most prosperous post town — “Narai of a Thousand Houses.”",
           url: "https://en.wikipedia.org/wiki/Narai-juku",
         },
         {
           label: "Look for",
           text: "Kiso shikki (lacquerware) from local tree sap — shops that have stayed in the same families for generations.",
+        },
+        {
+          label: "Cash",
+          text: "No shops on the Torii Pass trail — bring water and snacks. Carry cash in Narai.",
+        },
+        {
+          label: "Backup",
+          text: "In rain, wind, fatigue, or poor trail conditions, skip the pass and take JR from Yabuhara straight to Narai.",
+        },
+        {
+          label: "Luggage",
+          text: "Confirm whether bags can go Nezame → YAMANIWA (deadline/arrival). If not, day bag + storage.",
         },
         {
           label: "Stay",
@@ -560,15 +921,30 @@ export const BASELINE_DAYS: DemoDay[] = [
     activities: [
       {
         id: nid(),
-        text: "Continue north through the Kiso Valley (train + walk)",
+        text: "Check out · JR to Yabuhara Station",
         done: false,
         kind: "transfer",
+        status: "confirm",
+        mapQuery: "Nezame Hotel",
+        mapQueryTo: "Yabuhara Station",
       },
       {
         id: nid(),
-        text: "Selected Nakasendo walking sections (~5–7 km, 2–3 hours)",
+        text: "Walk Yabuhara → Torii Pass → Narai (~6 km, 3–3.5 hours)",
         done: false,
         kind: "walk",
+        status: "planned",
+        mapQuery: "Yabuhara",
+        mapQueryTo: "Narai",
+      },
+      {
+        id: nid(),
+        text: "Backup: JR Yabuhara → Narai (skip Torii Pass)",
+        done: false,
+        kind: "transfer",
+        status: "option",
+        mapQuery: "Yabuhara Station",
+        mapQueryTo: "Narai",
       },
       {
         id: nid(),
@@ -578,46 +954,66 @@ export const BASELINE_DAYS: DemoDay[] = [
         lodging: true,
         meal: "B",
         included: true,
+        status: "booked",
+        mapQuery: "YAMANIWA INN",
       },
     ],
   },
   {
     id: nid(),
     day: 6,
-    label: "Day 6 · Torii Pass area → Matsumoto",
+    label: "Day 6 · Narai → Matsumoto",
     date: "2026-10-30",
     guide: {
-      title: "The High Pass",
+      title: "Thousand Houses to Castle Town",
       bullets: [
         {
-          label: "Hiking",
-          text: "Torii Pass is named for the Shinto gate at the top. Clear days can reveal Mt. Ontake, Japan’s second-highest peak after Fuji.",
-          url: "https://en.wikipedia.org/wiki/Mount_Ontake",
-        },
-        {
           label: "Culture",
-          text: "Look for the “Stone of the Severed Head” (Kubitsuka) — site of a bloody 16th-century battle between the Takeda and Kiso clans.",
-          url: "https://en.wikipedia.org/wiki/Nakasend%C5%8D",
+          text: "Morning stroll in Narai-juku before the train — lacquerware shops and the long wooden main street at ~900 m.",
+          url: "https://en.wikipedia.org/wiki/Narai-juku",
         },
         {
           label: "Transition",
           text: "Toward Matsumoto the landscape opens into a wide basin ringed by the Japan Alps.",
           url: "https://en.wikipedia.org/wiki/Matsumoto,_Nagano",
         },
+        {
+          label: "Look for",
+          text: "In Matsumoto: Castle, Nakamachi-dori, Nawate-dori — city walking after the pass day.",
+          url: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
+        },
+        {
+          label: "Luggage",
+          text: "Confirm whether bags can go YAMANIWA → Traveler’s Inn Takagi. Check-in 16:30–20:00; call if after 20:00.",
+        },
+        {
+          label: "Cash",
+          text: "Small Narai shops may prefer cash; Matsumoto accepts cards widely.",
+        },
+        {
+          label: "Timetable",
+          text: "JR Chuo Line Narai → Matsumoto — confirm on the day.",
+          url: "https://www.jreast.co.jp/timetable/",
+        },
       ],
     },
     activities: [
       {
         id: nid(),
-        text: "Explore Narai-juku; optional Torii Pass area walk (~4–7 km, can be shortened)",
+        text: "Morning stroll Narai-juku",
         done: false,
         kind: "walk",
+        status: "planned",
+        mapQuery: "Narai-juku",
       },
       {
         id: nid(),
-        text: "Train to Matsumoto",
+        text: "JR Chuo Narai → Matsumoto",
         done: false,
         kind: "transfer",
+        status: "planned",
+        mapQuery: "Narai",
+        mapQueryTo: "Matsumoto",
       },
       {
         id: nid(),
@@ -626,6 +1022,8 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "stay",
         lodging: true,
         included: true,
+        status: "booked",
+        mapQuery: "Traveler's Inn Takagi",
       },
     ],
   },
@@ -655,9 +1053,27 @@ export const BASELINE_DAYS: DemoDay[] = [
     activities: [
       {
         id: nid(),
-        text: "Explore Matsumoto Castle and old town (~3–5 km; recovery / rest day)",
+        text: "Explore Matsumoto Castle (~1–2 hours)",
         done: false,
         kind: "walk",
+        status: "planned",
+        mapQuery: "Matsumoto Castle",
+      },
+      {
+        id: nid(),
+        text: "Old town stroll · Nakamachi-dori & Nawate-dori",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Nakamachi",
+        mapQueryTo: "Nawate-dori",
+      },
+      {
+        id: nid(),
+        text: "Option: day trip Narai → Kiso-Hirasawa or catch-up Torii Pass",
+        done: false,
+        kind: "note",
+        status: "option",
       },
       {
         id: nid(),
@@ -666,6 +1082,8 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "stay",
         lodging: true,
         included: true,
+        status: "booked",
+        mapQuery: "Traveler's Inn Takagi",
       },
     ],
   },
@@ -702,6 +1120,9 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "transfer",
         highwayBus: true,
         included: true,
+        status: "planned",
+        mapQuery: "Matsumoto",
+        mapQueryTo: "Shinjuku",
       },
       {
         id: nid(),
@@ -710,6 +1131,8 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "stay",
         lodging: true,
         included: true,
+        status: "booked",
+        mapQuery: "Shinjuku Washington Hotel",
       },
     ],
   },
@@ -744,18 +1167,24 @@ export const BASELINE_DAYS: DemoDay[] = [
         text: "Free time in Tokyo (walk as you like)",
         done: false,
         kind: "note",
+        status: "planned",
+        mapQuery: "Shinjuku",
       },
       {
         id: nid(),
         text: "Shinjuku → Haneda Airport (own arrangement) for late-night flight",
         done: false,
         kind: "transfer",
+        status: "planned",
+        mapQuery: "Shinjuku",
+        mapQueryTo: "Haneda",
       },
       {
         id: nid(),
-        text: "Note: walking distances are estimates; sections can be shortened. Best walks combine with trains/buses (not continuous Nakatsugawa→Narai).",
+        text: "Note: walking distances are estimates; sections can be shortened. Best walks combine with trains/buses — not continuous Nakatsugawa→Narai.",
         done: false,
         kind: "note",
+        status: "planned",
       },
     ],
   },
@@ -771,6 +1200,9 @@ export const BASELINE_DAYS: DemoDay[] = [
         done: false,
         time: "00:25",
         kind: "transfer",
+        status: "planned",
+        mapQuery: "Haneda",
+        mapQueryTo: "Singapore Changi Airport",
       },
       {
         id: nid(),
@@ -778,6 +1210,7 @@ export const BASELINE_DAYS: DemoDay[] = [
         done: false,
         time: "06:55",
         kind: "note",
+        status: "planned",
       },
     ],
   },
@@ -942,8 +1375,9 @@ export function buildDocs(days: DemoDay[], totalBudget: number) {
         `· Personalized itinerary & self-guided walking info`,
         `· Pre-trip support from Japan Navi Journey`,
         ``,
-        `Walking notes: distances are estimates (typically max ~5–8 km walking days).`,
+        `Walking notes: distances are estimates (Magome–Tsumago ~8 km; Suhara–Agematsu ~12 km; Torii Pass ~6 km).`,
         `Walks combine with trains/buses — not continuous from Nakatsugawa to Narai.`,
+        `Day 4 default: Suhara → Agematsu; fill Suhara-sui, buy lunch before Suhara, walk home to Nezame Hotel when possible.`,
       ].join("\n"),
     ),
     noteDoc(
@@ -954,7 +1388,7 @@ export function buildDocs(days: DemoDay[], totalBudget: number) {
         `· International flights (NH804 Singapore→Narita · NH843 Haneda→Singapore) — shown on Plan as guest flights`,
         `· Narita ↔ Shinjuku and Shinjuku ↔ Haneda (own arrangement)`,
         `· Local trains / buses / taxis not specified in the package`,
-        `· Luggage delivery (arrange locally; budget separately)`,
+        `· Luggage delivery / Magome–Tsumago bag transfer (arrange locally; budget separately)`,
         `· Unlisted meals and drinks`,
         `· Private on-trail guides`,
         `· Travel insurance`,
@@ -971,6 +1405,10 @@ export function buildDocs(days: DemoDay[], totalBudget: number) {
         `Bear bell: You will hear them everywhere. If you forget to buy one, most trailheads have a permanent bell on a pole — give it a loud ring before entering the woods.`,
         ``,
         `Daylight: The sun sets behind the mountains early (around 4:45–5:00 PM). Be off forested trails by about 4:00 PM.`,
+        ``,
+        `Day 4 (Suhara → Agematsu ~12 km): Fill bottles at Suhara-sui spring before starting. Buy bento/onigiri in Suhara — no shops until Agematsu. Finish at Nezame-no-toko and walk to Nezame Hotel to skip the ¥240 station train when possible.`,
+        ``,
+        `Torii Pass backup: In rain, wind, or fatigue, take JR Yabuhara → Narai instead of the pass.`,
         ``,
         `Soba protocol (Matsumoto inn): Taste soba plain first with a little salt or wasabi to judge the buckwheat, then dip in the sauce.`,
         ``,
@@ -1039,6 +1477,8 @@ export type SeedResult = {
 /** Merge known Nakasendo place coords into tc_plan_geo (safe to call anytime). */
 export function seedNakasendoGeocodeCache() {
   mergeGeocodeCache(DEMO_GEO)
+  // Drop "narai." etc. and any demo hits outside Singapore–Japan corridor
+  purgeStaleDemoGeocode(Object.keys(DEMO_GEO))
   mergePlaceNotes(DEMO_PLACE_NOTES)
 }
 
@@ -1090,6 +1530,7 @@ export function seedNakasendoDemo(opts?: {
 
   snapshotTrip(DEMO_TRIP_ID)
   LS.set(DEMO_LOADED_KEY, true)
+  LS.set(DEMO_VERSION_KEY, DEMO_CONTENT_VERSION)
 
   return {
     trip,
@@ -1117,4 +1558,11 @@ export function shouldResetDemo() {
   } catch {
     return false
   }
+}
+
+/** True when stored demo content version is missing or behind DEMO_CONTENT_VERSION. */
+export function needsDemoContentReseed() {
+  const stored = LS.get<number | string>(DEMO_VERSION_KEY, 0)
+  const n = typeof stored === "number" ? stored : Number(stored)
+  return !Number.isFinite(n) || n !== DEMO_CONTENT_VERSION
 }

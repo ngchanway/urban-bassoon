@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "pages:dev": "wrangler pages dev dist --compatibility-date=2024-09-23",
+    "pages:dev": "wrangler pages dev dist --compatibility-date=2024-09-23 --ip 127.0.0.1 --port 8788",
     "generate:app": "node scripts/build-app.mjs",
     "generate:split": "node scripts/split-components.mjs",
     "lint": "biome check .",

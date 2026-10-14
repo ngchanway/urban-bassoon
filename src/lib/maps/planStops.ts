@@ -56,7 +56,11 @@ const HUB_AIRPORT_QUERY: Record<string, string> = {
 }
 
 function normKey(q: string) {
-  return q.trim().toLowerCase().replace(/\s+/g, " ")
+  return q
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[.,;:!"')\]]+$/g, "")
 }
 
 function actId(id: string | number) {
@@ -72,7 +76,8 @@ function splitPlaces(raw: string): string[] {
         .replace(/\d{1,2}:\d{2}\s*[–—-]\s*\d{1,2}:\d{2}/g, " ")
         .replace(/\b\d{1,2}:\d{2}\b/g, " ")
         .replace(/\s+/g, " ")
-        .trim(),
+        .trim()
+        .replace(/[.,;:!"')\]]+$/g, ""),
     )
     .filter(Boolean)
 }
@@ -178,7 +183,7 @@ export function extractPlaceQueries(
   const hubKey = hubName ? normKey(hubName) : ""
 
   const push = (pq: PlaceQuery) => {
-    const q = pq.query.trim()
+    const q = pq.query.trim().replace(/[.,;:!"')\]]+$/g, "")
     if (!q) return
     const explicitMap = String(pq.id || "").startsWith("mq-")
     if (explicitMap) {
@@ -367,6 +372,7 @@ export function extractPlaceQueries(
     const dayLabel = day.label || ""
     for (const act of day.activities || []) {
       if ((act.mapQuery || "").trim()) continue
+      if (act.kind === "note") continue
       if (isStayAct(act) || isTransitAct(act)) continue
       const t = (act.text || "").trim()
       if (!t) continue
