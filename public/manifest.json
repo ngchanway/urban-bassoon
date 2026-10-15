@@ -2,7 +2,7 @@
   "name": "Travel Companion",
   "short_name": "TravelPal",
   "description": "Your all-in-one travel companion — plan, pack, budget, explore.",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#07101F",
@@ -24,8 +24,20 @@
   ],
   "screenshots": [],
   "shortcuts": [
-    { "name": "Plan Trip", "url": "./index.html#plan", "description": "Open trip planner" },
-    { "name": "Packing List", "url": "./index.html#pack", "description": "Open packing checklist" },
-    { "name": "Budget", "url": "./index.html#budget", "description": "Track expenses" }
+    {
+      "name": "Plan Trip",
+      "url": "/#plan",
+      "description": "Open trip planner"
+    },
+    {
+      "name": "Packing List",
+      "url": "/#pack",
+      "description": "Open packing checklist"
+    },
+    {
+      "name": "Budget",
+      "url": "/#budget",
+      "description": "Track expenses"
+    }
   ]
 }

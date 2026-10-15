@@ -1,0 +1,10 @@
+name = "urban-bassoon"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+# Workers AI binding is optional for local Pages Functions.
+# Keeping it out of local `pages:dev` avoids Wrangler remote mode (needs workers.dev).
+# Production: bind AI in the Cloudflare Pages dashboard (or uncomment below for deploy).
+# Gemini primary still works via GEMINI_API_KEY in .dev.vars / env.
+# [ai]
+# binding = "AI"
