@@ -164,9 +164,63 @@ function transformCode(code, isApp = false) {
   c = c.replace(/const \{ useState, useEffect, useRef \} = React;\n\n/, '');
   c = c.replace(/React\.Fragment/g, 'Fragment');
   c = c.replace(/const L = window\.L;/g, '// L imported from leaflet');
-  c = c.replace(
-    /await fetch\("https:\/\/api\.anthropic\.com\/v1\/messages",\s*\{[^}]*method:\s*"POST"[^}]*headers:\s*\{[^}]*\}[^}]*body:\s*JSON\.stringify\(\{([^}]+(?:\{[^}]*\}[^}]*)*)\}\)\s*\}\)/gs,
-    (match, inner) => {
+  {
+    const fetchPrefix = 'await fetch("https://api.anthropic.com/v1/messages",';
+    let out = '';
+    let i = 0;
+    while (i < c.length) {
+      const start = c.indexOf(fetchPrefix, i);
+      if (start === -1) {
+        out += c.slice(i);
+        break;
+      }
+
+      out += c.slice(i, start);
+
+      let j = start;
+      let parenDepth = 0;
+      let braceDepth = 0;
+      let inString = false;
+      let stringQuote = '';
+      let escaped = false;
+
+      while (j < c.length) {
+        const ch = c[j];
+
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+          } else if (ch === '\\') {
+            escaped = true;
+          } else if (ch === stringQuote) {
+            inString = false;
+            stringQuote = '';
+          }
+          j++;
+          continue;
+        }
+
+        if (ch === '"' || ch === '\'' || ch === '`') {
+          inString = true;
+          stringQuote = ch;
+          j++;
+          continue;
+        }
+
+        if (ch === '(') parenDepth++;
+        else if (ch === ')') {
+          parenDepth--;
+          if (parenDepth === 0 && braceDepth === 0) {
+            j++;
+            break;
+          }
+        } else if (ch === '{') braceDepth++;
+        else if (ch === '}') braceDepth--;
+
+        j++;
+      }
+
+      const match = c.slice(start, j);
       const taskMatch = match.includes('receipt') || match.includes('image/jpeg') ? 'ocr'
         : match.includes('travel photo') || match.includes('caption JSON') ? 'caption'
           : match.includes('packing') || match.includes('Smart Pack') ? 'smartpack'
@@ -177,9 +231,12 @@ function transformCode(code, isApp = false) {
                     : match.includes('memory writer') || match.includes('journal') ? 'enhance'
                       : match.includes('story') ? 'story'
                         : 'tip';
-      return `await callAi({ task: '${taskMatch}', messages: [], maxTokens: 1000 }) /* TODO: migrated stub */`;
+
+      out += `await callAi({ task: '${taskMatch}', messages: [], maxTokens: 1000 }) /* TODO: migrated stub */`;
+      i = j;
     }
-  );
+    c = out;
+  }
   // Simpler anthropic replacements - replace fetch pattern with callAi wrapper
   c = c.replace(
     /const res\s*=\s*await fetch\("https:\/\/api\.anthropic\.com\/v1\/messages",\s*\{[\s\S]*?\}\);/g,
