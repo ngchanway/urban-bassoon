@@ -7,7 +7,7 @@ export const generateExportHTML = ({
   baseCurrency,
   people,
 }) => {
-  const fmt = (n) => `${baseCurrency} ${Number(n || 0).toFixed(2)}`
+  const fmt = (n) => `${escHtml(baseCurrency)} ${Number(n || 0).toFixed(2)}`
   const totalSpent = expenses.reduce((s, e) => s + (e.amtBase ?? Number(e.amount ?? 0)), 0)
   const doneActs = itinerary.flatMap((d) => d.activities).filter((a) => a.done).length
   const allActs = itinerary.flatMap((d) => d.activities).length
