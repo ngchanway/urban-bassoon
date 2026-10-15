@@ -287,10 +287,10 @@ const tripDrawerMarker = ordered.find(m => m.name === 'TripDrawer');
 const mergeEnd = ordered.find(m => m.name === 'App');
 if (buildMarker && mergeEnd) {
   const tripBlock = transformCode(lines.slice(buildMarker.start, mergeEnd.start).join('\n'));
-  fs.writeFileSync(path.join(root, 'src/lib/trip.ts'), header.replace('../', './') + tripBlock);
+  fs.writeFileSync(path.join(root, 'src/lib/trip.ts'), header.replace(/\.\.\//g, './') + tripBlock);
 }
 
-fs.writeFileSync(path.join(root, 'src/lib/attachments.ts'), header.replace('../', './') + utilBlock);
+fs.writeFileSync(path.join(root, 'src/lib/attachments.ts'), header.replace(/\.\.\//g, './') + utilBlock);
 
 // Write components
 for (const [name, relPath] of Object.entries(componentMap)) {
