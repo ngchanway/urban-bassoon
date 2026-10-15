@@ -452,7 +452,7 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
 export const DEMO_TRIP_ID = "demo_nakasendo"
 export const DEMO_LOADED_KEY = "tc_demo_nakasendo_loaded"
 /** Bump when BASELINE_DAYS / demo map content changes so ?demo=nakasendo reseeds without ?reset=1. */
-export const DEMO_CONTENT_VERSION = 4
+export const DEMO_CONTENT_VERSION = 5
 export const DEMO_VERSION_KEY = "tc_demo_nakasendo_version"
 export const GUIDE_CONTACT =
   "mailto:hello@japan-navi-journey.com?subject=Nakasendo%20Walking%20Journey"
@@ -560,9 +560,9 @@ export const BASELINE_DAYS: DemoDay[] = [
       },
       {
         id: nid(),
-        text: "N'EX 14 Narita T1 10:44 → Shinjuku 12:08 (¥3,070–¥3,330 one way · own arrangement)",
+        text: "N'EX Narita T1 10:15 → Shinjuku 11:41 (¥3,070–¥3,330 one way · own arrangement)",
         done: false,
-        time: "10:44",
+        time: "10:15",
         kind: "transfer",
         status: "planned",
         mapQuery: "Narita Airport",
@@ -1213,6 +1213,10 @@ export const BASELINE_DAYS: DemoDay[] = [
           url: "https://en.wikipedia.org/wiki/Haneda_Airport",
         },
         {
+          label: "Luggage",
+          text: "After check-out, Shinjuku Washington Hotel offers free same-day luggage storage — self-service in the lobby. Ask the front desk if bags are too large to fit.",
+        },
+        {
           label: "Transfer",
           text: "Airport limousine usually takes 55–75 minutes (up to ~90 in traffic). Buy the ticket at the Shinjuku Washington Hotel front desk; the driver helps with bags. Evening buses run about every 15–30 minutes.",
           url: "https://www.limousinebus.co.jp/en/",
@@ -1232,6 +1236,14 @@ export const BASELINE_DAYS: DemoDay[] = [
         kind: "note",
         status: "planned",
         mapQuery: "Shinjuku",
+      },
+      {
+        id: nid(),
+        text: "Check out · free lobby luggage storage (same-day pickup · ask desk for oversized bags)",
+        done: false,
+        kind: "note",
+        status: "planned",
+        mapQuery: "Shinjuku Washington Hotel",
       },
       {
         id: nid(),

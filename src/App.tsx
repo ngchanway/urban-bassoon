@@ -976,6 +976,44 @@ export default function App() {
         d.id === dayId ? { ...d, activities: d.activities.filter((a) => a.id !== actId) } : d,
       ),
     )
+  const updateActivity = (dayId, actId, patch) => {
+    if (!patch || typeof patch !== "object") return
+    saveItinerary(
+      itinerary.map((d) => {
+        if (d.id !== dayId) return d
+        return {
+          ...d,
+          activities: d.activities.map((a) => {
+            if (a.id !== actId) return a
+            const text =
+              "text" in patch ? String(patch.text ?? "").trim() : String(a.text || "").trim()
+            if (!text) return a
+            const time =
+              "time" in patch ? String(patch.time ?? "").trim() : String(a.time || "").trim()
+            const status =
+              "status" in patch ? String(patch.status ?? "").trim() : String(a.status || "").trim()
+            const mapQuery =
+              "mapQuery" in patch
+                ? String(patch.mapQuery ?? "").trim()
+                : String(a.mapQuery || "").trim()
+            const mapQueryTo =
+              "mapQueryTo" in patch
+                ? String(patch.mapQueryTo ?? "").trim()
+                : String(a.mapQueryTo || "").trim()
+            const { time: _t, status: _s, mapQuery: _m, mapQueryTo: _mt, ...base } = a
+            return {
+              ...base,
+              text,
+              ...(time ? { time } : {}),
+              ...(status ? { status } : {}),
+              ...(mapQuery ? { mapQuery } : {}),
+              ...(mapQueryTo ? { mapQueryTo } : {}),
+            }
+          }),
+        }
+      }),
+    )
+  }
 
   // Keep itinerary day count aligned with Home trip-strip dates (pad / trim empty only)
   useEffect(() => {
@@ -1370,6 +1408,7 @@ export default function App() {
               itinerary={itinerary}
               addDay={addDay}
               addActivity={addActivity}
+              updateActivity={updateActivity}
               toggleActivity={toggleActivity}
               removeDay={removeDay}
               removeActivity={removeActivity}

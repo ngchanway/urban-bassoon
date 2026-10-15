@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { IconCamera, IconExpense, IconMap } from "./Icons"
+import { IconCamera, IconEdit, IconExpense, IconMap } from "./Icons"
 
 export function SwipeableActivity({
   act,
@@ -8,6 +8,7 @@ export function SwipeableActivity({
   onDelete,
   onExpense,
   onMemory,
+  onEdit,
   onLocate,
   isFirst: _isFirst,
   flash,
@@ -187,34 +188,52 @@ export function SwipeableActivity({
           ) : null}
         </span>
 
-        {/* Quick actions — map via text tap; keep expense/memory */}
+        {/* Quick actions — map via text tap; edit / expense / memory */}
         <div
           className="act-quick-btns"
           style={{ opacity: Math.max(0, 1 - Math.abs(dx) / 30), flexShrink: 0 }}
         >
+          {onEdit && (
+            <button
+              type="button"
+              className="act-q-btn"
+              title="Edit activity"
+              aria-label="Edit activity"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit()
+              }}
+            >
+              <IconEdit size={16} />
+            </button>
+          )}
           {onExpense && (
-            <div
+            <button
+              type="button"
               className="act-q-btn"
               title="Log expense"
+              aria-label="Log expense"
               onClick={(e) => {
                 e.stopPropagation()
                 onExpense()
               }}
             >
               <IconExpense size={16} />
-            </div>
+            </button>
           )}
           {onMemory && (
-            <div
+            <button
+              type="button"
               className="act-q-btn"
               title="Add memory"
+              aria-label="Add memory"
               onClick={(e) => {
                 e.stopPropagation()
                 onMemory()
               }}
             >
               <IconCamera size={16} />
-            </div>
+            </button>
           )}
         </div>
       </div>
