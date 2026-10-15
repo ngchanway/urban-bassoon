@@ -39,8 +39,7 @@ const constantsBlock = lines.slice(2, constantsEnd).join('\n');
 
 // --- lib/constants.ts ---
 const constantsTs = constantsBlock
-  .replace(/^const /gm, 'export const ')
-  .replace(/^\/\//gm, '//');
+  .replace(/^const /gm, 'export const ');
 fs.mkdirSync(path.join(root, 'src/lib'), { recursive: true });
 fs.writeFileSync(path.join(root, 'src/lib/constants.ts'), constantsTs + '\n');
 
