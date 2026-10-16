@@ -940,6 +940,9 @@ export default function App() {
     const mapQueryTo =
       typeof payload === "object" && payload?.mapQueryTo ? String(payload.mapQueryTo).trim() : ""
     const time = typeof payload === "object" && payload?.time ? String(payload.time).trim() : ""
+    const status =
+      typeof payload === "object" && payload?.status ? String(payload.status).trim() : ""
+    const kind = typeof payload === "object" && payload?.kind ? String(payload.kind).trim() : ""
     const act: {
       id: number
       text: string
@@ -947,6 +950,8 @@ export default function App() {
       mapQuery?: string
       mapQueryTo?: string
       time?: string
+      status?: string
+      kind?: string
     } = {
       id: Date.now(),
       text: String(text).trim(),
@@ -955,6 +960,8 @@ export default function App() {
     if (mapQuery) act.mapQuery = mapQuery
     if (mapQueryTo) act.mapQueryTo = mapQueryTo
     if (time) act.time = time
+    if (status) act.status = status
+    if (kind) act.kind = kind
     saveItinerary(
       itinerary.map((d) => (d.id === dayId ? { ...d, activities: [...d.activities, act] } : d)),
     )
