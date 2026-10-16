@@ -11,6 +11,7 @@ export function PlanTab({
   itinerary,
   addDay,
   addActivity,
+  updateActivity,
   toggleActivity,
   removeDay,
   removeActivity,
@@ -30,8 +31,21 @@ export function PlanTab({
   const [flashId, setFlashId] = useState(null)
   const [expandedDayId, setExpandedDayId] = useState(() => itinerary[0]?.id ?? null)
   const [addSheet, setAddSheet] = useState(null) // { day }
-  const [addMode, setAddMode] = useState("single") // single | fromto
-  const [addForm, setAddForm] = useState({ place: "", from: "", to: "", detail: "", time: "" })
+  const [addForm, setAddForm] = useState({
+    text: "",
+    time: "",
+    status: "",
+    mapQuery: "",
+    mapQueryTo: "",
+  })
+  const [editSheet, setEditSheet] = useState(null) // { day, act }
+  const [editForm, setEditForm] = useState({
+    text: "",
+    time: "",
+    status: "",
+    mapQuery: "",
+    mapQueryTo: "",
+  })
 
   const tripDays =
     trip.startDate && trip.endDate
@@ -55,36 +69,50 @@ export function PlanTab({
 
   const openAddSheet = (day) => {
     setAddSheet({ day })
-    setAddMode("single")
-    setAddForm({ place: "", from: "", to: "", detail: "", time: "" })
+    setAddForm({ text: "", time: "", status: "", mapQuery: "", mapQueryTo: "" })
+  }
+
+  const openEditSheet = (day, act) => {
+    setEditSheet({ day, act })
+    setEditForm({
+      text: act.text || "",
+      time: typeof act.time === "string" ? act.time : "",
+      status: typeof act.status === "string" ? act.status : "",
+      mapQuery: act.mapQuery || "",
+      mapQueryTo: act.mapQueryTo || "",
+    })
+  }
+
+  const submitEditActivity = () => {
+    if (!editSheet?.day || !editSheet?.act || !updateActivity) return
+    const text = editForm.text.trim()
+    if (!text) return
+    updateActivity(editSheet.day.id, editSheet.act.id, {
+      text,
+      time: editForm.time.trim(),
+      status: editForm.status.trim(),
+      mapQuery: editForm.mapQuery.trim(),
+      mapQueryTo: editForm.mapQueryTo.trim(),
+    })
+    setEditSheet(null)
   }
 
   const submitAddActivity = () => {
     if (!addSheet?.day) return
-    const detail = addForm.detail.trim()
+    const text = addForm.text.trim()
+    if (!text) return
     const time = addForm.time.trim()
-    if (addMode === "fromto") {
-      const from = addForm.from.trim()
-      const to = addForm.to.trim()
-      if (!from || !to) return
-      const text = detail ? `${from} → ${to} · ${detail}` : `${from} → ${to}`
-      addActivity(addSheet.day.id, {
-        text,
-        kind: "walk",
-        mapQuery: from,
-        mapQueryTo: to,
-        ...(time ? { time } : {}),
-      })
-    } else {
-      const place = addForm.place.trim()
-      if (!place) return
-      const text = detail ? `${place} · ${detail}` : place
-      addActivity(addSheet.day.id, {
-        text,
-        mapQuery: place,
-        ...(time ? { time } : {}),
-      })
-    }
+    const status = addForm.status.trim()
+    const mapQuery = addForm.mapQuery.trim()
+    const mapQueryTo = addForm.mapQueryTo.trim()
+    addActivity(addSheet.day.id, {
+      text,
+      ...(time ? { time } : {}),
+      ...(status ? { status } : {}),
+      ...(mapQuery ? { mapQuery } : {}),
+      ...(mapQueryTo ? { mapQueryTo } : {}),
+      ...(mapQuery && mapQueryTo ? { kind: "walk" } : {}),
+    })
     setAddSheet(null)
   }
 
@@ -141,10 +169,7 @@ export function PlanTab({
   const tripSlug = (trip.name || "trip").replace(/\s+/g, "-")
   const icsStr = () => generateICS({ trip, itinerary })
 
-  const canSaveAdd =
-    addMode === "fromto"
-      ? Boolean(addForm.from.trim() && addForm.to.trim())
-      : Boolean(addForm.place.trim())
+  const canSaveAdd = Boolean(addForm.text.trim())
 
   const tripBlock = showTripForm ? (
     <div className="plan-trip-details">
@@ -412,6 +437,7 @@ export function PlanTab({
                         onDelete={() => removeActivity(day.id, act.id)}
                         onExpense={() => onQuickExpense(act, day)}
                         onMemory={() => onQuickMemory(act, day)}
+                        onEdit={() => openEditSheet(day, act)}
                         onLocate={
                           locatableIds.has(String(act.id))
                             ? () => handleLocate(act.id, day.id)
@@ -453,67 +479,127 @@ export function PlanTab({
         </div>
       </div>
 
+      {editSheet && (
+        <div
+          className="pin-form-overlay"
+          onClick={(e) => e.target === e.currentTarget && setEditSheet(null)}
+        >
+          <div className="pin-form pin-form-scroll">
+            <div className="pin-form-title">Edit activity</div>
+            <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 12 }}>
+              {editSheet.day.label}
+            </div>
+            <div className="flex flex-col gap-8">
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Label
+                </div>
+                <textarea
+                  className="input plan-edit-textarea"
+                  rows={3}
+                  value={editForm.text}
+                  onChange={(e) => setEditForm((f) => ({ ...f, text: e.target.value }))}
+                  placeholder="Activity text"
+                />
+              </div>
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Time (optional)
+                </div>
+                <input
+                  className="input"
+                  type="time"
+                  value={editForm.time}
+                  onChange={(e) => setEditForm((f) => ({ ...f, time: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Status
+                </div>
+                <select
+                  className="input"
+                  value={editForm.status}
+                  onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                >
+                  <option value="">None</option>
+                  <option value="planned">Planned</option>
+                  <option value="booked">Booked</option>
+                  <option value="option">Option</option>
+                  <option value="confirm">Confirm</option>
+                </select>
+              </div>
+              {(editForm.mapQuery ||
+                editForm.mapQueryTo ||
+                editSheet.act.mapQuery ||
+                editSheet.act.mapQueryTo) && (
+                <>
+                  <div>
+                    <div className="card-title-small" style={{ marginBottom: 4 }}>
+                      Place / From (map)
+                    </div>
+                    <input
+                      className="input"
+                      value={editForm.mapQuery}
+                      onChange={(e) => setEditForm((f) => ({ ...f, mapQuery: e.target.value }))}
+                      placeholder="Map place"
+                    />
+                  </div>
+                  <div>
+                    <div className="card-title-small" style={{ marginBottom: 4 }}>
+                      To (optional)
+                    </div>
+                    <input
+                      className="input"
+                      value={editForm.mapQueryTo}
+                      onChange={(e) => setEditForm((f) => ({ ...f, mapQueryTo: e.target.value }))}
+                      placeholder="Destination for routing"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex gap-8 mt-12">
+              <button type="button" className="btn-ghost flex-1" onClick={() => setEditSheet(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn flex-1"
+                onClick={submitEditActivity}
+                disabled={!editForm.text.trim()}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {addSheet && (
         <div
           className="pin-form-overlay"
           onClick={(e) => e.target === e.currentTarget && setAddSheet(null)}
         >
-          <div className="pin-form">
+          <div className="pin-form pin-form-scroll">
             <div className="pin-form-title">Add activity</div>
             <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 12 }}>
               {addSheet.day.label}
             </div>
-            <div className="plan-add-mode" role="tablist" aria-label="Place mode">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={addMode === "single"}
-                className={`plan-add-mode-btn${addMode === "single" ? " active" : ""}`}
-                onClick={() => setAddMode("single")}
-              >
-                One place
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={addMode === "fromto"}
-                className={`plan-add-mode-btn${addMode === "fromto" ? " active" : ""}`}
-                onClick={() => setAddMode("fromto")}
-              >
-                From → To
-              </button>
-            </div>
-            <div className="flex flex-col gap-8" style={{ marginTop: 10 }}>
-              {addMode === "single" ? (
-                <input
-                  className="input"
-                  placeholder="Place (for map)"
-                  value={addForm.place}
-                  onChange={(e) => setAddForm((f) => ({ ...f, place: e.target.value }))}
+            <div className="flex flex-col gap-8">
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Label
+                </div>
+                <textarea
+                  className="plan-edit-textarea"
+                  rows={3}
+                  placeholder="Activity text"
+                  value={addForm.text}
+                  onChange={(e) => setAddForm((f) => ({ ...f, text: e.target.value }))}
+                  required
                 />
-              ) : (
-                <>
-                  <input
-                    className="input"
-                    placeholder="From"
-                    value={addForm.from}
-                    onChange={(e) => setAddForm((f) => ({ ...f, from: e.target.value }))}
-                  />
-                  <input
-                    className="input"
-                    placeholder="To"
-                    value={addForm.to}
-                    onChange={(e) => setAddForm((f) => ({ ...f, to: e.target.value }))}
-                  />
-                </>
-              )}
-              <input
-                className="input"
-                placeholder="Detail (optional)"
-                value={addForm.detail}
-                onChange={(e) => setAddForm((f) => ({ ...f, detail: e.target.value }))}
-                onKeyDown={(e) => e.key === "Enter" && canSaveAdd && submitAddActivity()}
-              />
+              </div>
               <div>
                 <div className="card-title-small" style={{ marginBottom: 4 }}>
                   Time (optional)
@@ -523,6 +609,44 @@ export function PlanTab({
                   type="time"
                   value={addForm.time}
                   onChange={(e) => setAddForm((f) => ({ ...f, time: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Status
+                </div>
+                <select
+                  className="input"
+                  value={addForm.status}
+                  onChange={(e) => setAddForm((f) => ({ ...f, status: e.target.value }))}
+                >
+                  <option value="">None</option>
+                  <option value="planned">Planned</option>
+                  <option value="booked">Booked</option>
+                  <option value="option">Option</option>
+                  <option value="confirm">Confirm</option>
+                </select>
+              </div>
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  Place / From (map)
+                </div>
+                <input
+                  className="input"
+                  value={addForm.mapQuery}
+                  onChange={(e) => setAddForm((f) => ({ ...f, mapQuery: e.target.value }))}
+                  placeholder="Map place"
+                />
+              </div>
+              <div>
+                <div className="card-title-small" style={{ marginBottom: 4 }}>
+                  To (optional)
+                </div>
+                <input
+                  className="input"
+                  value={addForm.mapQueryTo}
+                  onChange={(e) => setAddForm((f) => ({ ...f, mapQueryTo: e.target.value }))}
+                  placeholder="Destination for routing"
                 />
               </div>
             </div>

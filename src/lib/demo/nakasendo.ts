@@ -116,6 +116,24 @@ const DEMO_GEO: Record<string, { lat: number; lng: number; label: string; local?
     label: "Matsumoto Castle",
     local: "松本城",
   },
+  "former kaichi school": {
+    lat: 36.2372,
+    lng: 137.9756,
+    label: "Former Kaichi School",
+    local: "旧開智学校",
+  },
+  "kaichi school": {
+    lat: 36.2372,
+    lng: 137.9756,
+    label: "Former Kaichi School",
+    local: "旧開智学校",
+  },
+  "matsumoto city museum of art": {
+    lat: 36.2315,
+    lng: 137.9789,
+    label: "Matsumoto City Museum of Art",
+    local: "松本市美術館",
+  },
   nakamachi: {
     lat: 36.2358,
     lng: 137.9715,
@@ -348,6 +366,22 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
       "Castle stairs are steep and crowded; lockers near the entrance help if you are between trains.",
     moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
   },
+  "former kaichi school": {
+    text: "Former Kaichi School is a Meiji-era Western-style schoolhouse — one of Japan’s oldest surviving elementary schools — now a museum of early public education.",
+    caution: "Combo tickets are online-only; confirm closing days before you buy.",
+    moreUrl: "https://en.wikipedia.org/wiki/Kaichi_School",
+  },
+  "kaichi school": {
+    text: "Former Kaichi School is a Meiji-era Western-style schoolhouse — one of Japan’s oldest surviving elementary schools — now a museum of early public education.",
+    caution: "Combo tickets are online-only; confirm closing days before you buy.",
+    moreUrl: "https://en.wikipedia.org/wiki/Kaichi_School",
+  },
+  "matsumoto city museum of art": {
+    text: "Matsumoto City Museum of Art holds a strong Yayoi Kusama collection and rotating exhibitions a short walk from the castle district.",
+    caution:
+      "Combo covers the collection exhibition only — special exhibitions need a separate fee.",
+    moreUrl: "https://en.wikipedia.org/wiki/Matsumoto_City_Museum_of_Art",
+  },
   nakamachi: {
     text: "Nakamachi-dori is the preserved merchant street south of the castle — black-and-white latticed warehouses, cafés, and craft shops in the old town.",
     caution: "Narrow lanes; watch bikes and delivery carts when walking with a daypack.",
@@ -418,7 +452,7 @@ const DEMO_PLACE_NOTES: Record<string, { text: string; caution?: string; moreUrl
 export const DEMO_TRIP_ID = "demo_nakasendo"
 export const DEMO_LOADED_KEY = "tc_demo_nakasendo_loaded"
 /** Bump when BASELINE_DAYS / demo map content changes so ?demo=nakasendo reseeds without ?reset=1. */
-export const DEMO_CONTENT_VERSION = 2
+export const DEMO_CONTENT_VERSION = 5
 export const DEMO_VERSION_KEY = "tc_demo_nakasendo_version"
 export const GUIDE_CONTACT =
   "mailto:hello@japan-navi-journey.com?subject=Nakasendo%20Walking%20Journey"
@@ -526,9 +560,9 @@ export const BASELINE_DAYS: DemoDay[] = [
       },
       {
         id: nid(),
-        text: "Arrive Narita Airport 08:40 · Narita → Shinjuku (own arrangement)",
+        text: "N'EX Narita T1 10:15 → Shinjuku 11:41 (¥3,070–¥3,330 one way · own arrangement)",
         done: false,
-        time: "08:40",
+        time: "10:15",
         kind: "transfer",
         status: "planned",
         mapQuery: "Narita Airport",
@@ -536,8 +570,9 @@ export const BASELINE_DAYS: DemoDay[] = [
       },
       {
         id: nid(),
-        text: "Daytime highway bus Shinjuku → Nagoya (by Japan Navi)",
+        text: "Highway bus Shinjuku 13:00 → Nagoya 18:50 (by Japan Navi)",
         done: false,
+        time: "13:00",
         kind: "transfer",
         highwayBus: true,
         included: true,
@@ -1041,6 +1076,11 @@ export const BASELINE_DAYS: DemoDay[] = [
           url: "https://en.wikipedia.org/wiki/Matsumoto_Castle",
         },
         {
+          label: "Ticket",
+          text: "Saturday morning: buy an online combo covering Matsumoto Castle, Former Kaichi School, and Matsumoto City Museum of Art. Castle entry is timed; check each facility’s closing calendar before purchase.",
+          url: "https://www.matsumoto-castle.jp/eng/info",
+        },
+        {
           label: "Look for",
           text: "The Moon Viewing Wing — a red-railed room from the peaceful Edo period for sake and moonlight, unlike the dark defensive keep.",
         },
@@ -1053,11 +1093,28 @@ export const BASELINE_DAYS: DemoDay[] = [
     activities: [
       {
         id: nid(),
-        text: "Explore Matsumoto Castle (~1–2 hours)",
+        text: "Morning · Matsumoto Castle (combo ticket · also Former Kaichi School & City Museum of Art)",
         done: false,
+        time: "09:00",
         kind: "walk",
         status: "planned",
         mapQuery: "Matsumoto Castle",
+      },
+      {
+        id: nid(),
+        text: "Former Kaichi School (combo ticket)",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Former Kaichi School",
+      },
+      {
+        id: nid(),
+        text: "Matsumoto City Museum of Art (combo ticket)",
+        done: false,
+        kind: "walk",
+        status: "planned",
+        mapQuery: "Matsumoto City Museum of Art",
       },
       {
         id: nid(),
@@ -1115,8 +1172,9 @@ export const BASELINE_DAYS: DemoDay[] = [
     activities: [
       {
         id: nid(),
-        text: "Daytime highway bus Matsumoto → Shinjuku (by Japan Navi)",
+        text: "Highway bus Matsumoto 14:20 → Shinjuku 17:38 (by Japan Navi)",
         done: false,
+        time: "14:20",
         kind: "transfer",
         highwayBus: true,
         included: true,
@@ -1151,8 +1209,17 @@ export const BASELINE_DAYS: DemoDay[] = [
         },
         {
           label: "Departure",
-          text: "A late Haneda flight leaves room for one last bowl of ramen or sushi in Shinjuku.",
+          text: "A late Haneda flight leaves a free evening in Shinjuku — ramen or sushi before the hotel limousine to the airport.",
           url: "https://en.wikipedia.org/wiki/Haneda_Airport",
+        },
+        {
+          label: "Luggage",
+          text: "After check-out, Shinjuku Washington Hotel offers free same-day luggage storage — self-service in the lobby. Ask the front desk if bags are too large to fit.",
+        },
+        {
+          label: "Transfer",
+          text: "Airport limousine usually takes 55–75 minutes (up to ~90 in traffic). Buy the ticket at the Shinjuku Washington Hotel front desk; the driver helps with bags. Evening buses run about every 15–30 minutes.",
+          url: "https://www.limousinebus.co.jp/en/",
         },
         {
           label: "Omiyage",
@@ -1172,11 +1239,20 @@ export const BASELINE_DAYS: DemoDay[] = [
       },
       {
         id: nid(),
-        text: "Shinjuku → Haneda Airport (own arrangement) for late-night flight",
+        text: "Check out · free lobby luggage storage (same-day pickup · ask desk for oversized bags)",
         done: false,
+        kind: "note",
+        status: "planned",
+        mapQuery: "Shinjuku Washington Hotel",
+      },
+      {
+        id: nid(),
+        text: "Airport limousine Shinjuku Washington Hotel ~19:00–19:20 → Haneda ~20:00–20:30 (¥1,400 · own arrangement)",
+        done: false,
+        time: "19:00",
         kind: "transfer",
         status: "planned",
-        mapQuery: "Shinjuku",
+        mapQuery: "Shinjuku Washington Hotel",
         mapQueryTo: "Haneda",
       },
       {
@@ -1341,7 +1417,7 @@ function listHighwayBusLabels(days: DemoDay[]) {
   const labels: string[] = []
   for (const d of days) {
     for (const a of d.activities) {
-      if (a.highwayBus) labels.push(a.text.replace(/^Daytime highway bus /, ""))
+      if (a.highwayBus) labels.push(a.text.replace(/^(?:Daytime )?Highway bus /i, ""))
     }
   }
   return labels

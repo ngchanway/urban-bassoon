@@ -5719,6 +5719,16 @@ html.japan-navi .plan-export-toggle {
   margin: 0 auto;
   animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+.pin-form-scroll {
+  max-height: min(85dvh, 640px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.plan-edit-textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.35;
+}
 @keyframes slideUp {
   from {
     transform: translateY(100%);
